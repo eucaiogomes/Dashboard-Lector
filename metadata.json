@@ -1,0 +1,7 @@
+{
+  "name": "Lector Live · Indicadores T&D",
+  "description": "Painel de Indicadores de Treinamento e Desenvolvimento - Unimed Volta Redonda",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
