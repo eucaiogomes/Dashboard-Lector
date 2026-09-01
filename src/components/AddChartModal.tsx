@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { CHART_GROUPS, CHART_CATALOG, CatalogChartDef } from '../data/dashboardCatalog';
+import React, { useEffect, useState } from 'react';
+import { CHART_CATALOG, CatalogChartDef } from '../data/dashboardCatalog';
 
 interface AddChartModalProps {
   isOpen: boolean;
@@ -14,231 +14,95 @@ export const AddChartModal: React.FC<AddChartModalProps> = ({
   onSelectChart,
   existingChartIds
 }) => {
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const filteredCharts = useMemo(() => {
-    return CHART_CATALOG.filter(chart => {
-      const matchesGroup = selectedGroupId === 'all' || chart.group === selectedGroupId;
-      const matchesSearch =
-        searchTerm.trim() === '' ||
-        chart.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chart.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chart.subtitle.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesGroup && matchesSearch;
-    });
-  }, [selectedGroupId, searchTerm]);
+  useEffect(() => {
+    if (isOpen) setSelectedIds(new Set());
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fade-in select-none">
-      <div className="bg-white rounded-xl border border-[#cfd6e0] shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Top Header */}
-        <div className="p-5 px-6 border-b border-[#e5e9f0] flex items-center justify-between bg-linear-to-r from-[#183a75] to-[#122b56] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#eb6200]">
-              <i className="icon-performance text-[20px] text-white"></i>
-            </div>
-            <div>
-              <h2 className="text-[17px] font-bold tracking-tight text-white flex items-center gap-2">
-                <span>Adicionar Gráfico ao Dashboard</span>
-                <span className="text-[11px] font-semibold bg-[#eb6200] text-white px-2 py-0.5 rounded-full">
-                  {CHART_CATALOG.length} disponíveis
-                </span>
-              </h2>
-              <p className="text-[12px] text-white/80 mt-0.5">
-                Selecione os gráficos dos Indicadores T&amp;D e Geral LMS organizados por grupos temáticos.
-              </p>
-            </div>
-          </div>
+  const toggle = (chartId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(chartId)) {
+        next.delete(chartId);
+      } else {
+        next.add(chartId);
+      }
+      return next;
+    });
+  };
 
+  const handleAddSelected = () => {
+    CHART_CATALOG.forEach(chart => {
+      if (selectedIds.has(chart.id)) onSelectChart(chart);
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-fade-in select-none">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] flex flex-col max-h-[85vh] overflow-hidden">
+        {/* Header */}
+        <div className="px-6 pt-6 flex items-start justify-between shrink-0">
+          <h2 className="text-[19px] font-bold text-[#183a75] tracking-tight">Adicionar Widget</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 -mt-1 -mr-1 rounded-full text-[#8a93a0] hover:text-[#1f2733] hover:bg-[#f5f8fa] flex items-center justify-center transition-colors cursor-pointer"
             title="Fechar"
           >
-            <i className="icon-close-mini text-[14px]"></i>
+            <i className="icon-close-mini text-[16px]"></i>
           </button>
         </div>
+        <p className="px-6 mt-1 mb-3 text-[13px] text-[#4a5462] font-medium shrink-0">
+          Selecione os widgets que deseja adicionar
+        </p>
 
-        {/* Search Bar & Stats */}
-        <div className="p-4 px-6 bg-[#f8fafc] border-b border-[#e5e9f0] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <i className="icon-spyglass absolute left-3 top-1/2 -translate-y-1/2 text-[#8a93a0] text-[13px]"></i>
-            <input
-              type="text"
-              placeholder="Buscar gráfico por nome ou indicador..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-white border border-[#cfd6e0] rounded-md outline-none focus:border-[#183a75] text-[#1f2733] placeholder-[#8a93a0]"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a93a0] hover:text-[#1f2733]"
+        {/* Checklist */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-1">
+          {CHART_CATALOG.map(chart => {
+            const isAdded = existingChartIds.includes(chart.id);
+            const checked = isAdded || selectedIds.has(chart.id);
+
+            return (
+              <label
+                key={chart.id}
+                className={`flex items-center gap-2.5 py-2 px-1.5 -mx-1.5 rounded-md transition-colors ${
+                  isAdded ? 'cursor-default' : 'cursor-pointer hover:bg-[#f8fafc]'
+                }`}
               >
-                <i className="icon-close-mini text-[11px]"></i>
-              </button>
-            )}
-          </div>
-
-          <div className="text-[12px] text-[#6b7684]">
-            Exibindo <strong className="text-[#183a75]">{filteredCharts.length}</strong> de {CHART_CATALOG.length} gráficos
-          </div>
-        </div>
-
-        {/* Body Container: Sidebar Groups + Charts Grid */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-          {/* Groups Sidebar */}
-          <div className="w-full md:w-[240px] shrink-0 bg-[#f4f7fa] border-r border-[#e5e9f0] p-3 overflow-y-auto space-y-1">
-            <div className="text-[10px] font-bold text-[#8a93a0] uppercase tracking-wider px-3 py-1.5">
-              Grupos de Indicadores
-            </div>
-
-            {/* All items group */}
-            <button
-              onClick={() => setSelectedGroupId('all')}
-              className={`w-full text-left px-3 py-2 rounded-md text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                selectedGroupId === 'all'
-                  ? 'bg-[#183a75] text-white shadow-xs'
-                  : 'text-[#4a5462] hover:bg-[#e9eff6] hover:text-[#183a75]'
-              }`}
-            >
-              <div className="flex items-center gap-2 truncate">
-                <i className="icon-home text-[13px]"></i>
-                <span>Todos os Gráficos</span>
-              </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                selectedGroupId === 'all' ? 'bg-white/20 text-white' : 'bg-[#e2e8f0] text-[#64748b]'
-              }`}>
-                {CHART_CATALOG.length}
-              </span>
-            </button>
-
-            {/* Catalog Defined Groups */}
-            {CHART_GROUPS.map(group => {
-              const isSelected = selectedGroupId === group.id;
-              const countInGroup = CHART_CATALOG.filter(c => c.group === group.id).length;
-
-              return (
-                <button
-                  key={group.id}
-                  onClick={() => setSelectedGroupId(group.id)}
-                  className={`w-full text-left px-3 py-2.5 rounded-md text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#183a75] text-white shadow-xs'
-                      : 'text-[#4a5462] hover:bg-[#e9eff6] hover:text-[#183a75]'
-                  }`}
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={isAdded}
+                  onChange={() => toggle(chart.id)}
+                  className="w-[15px] h-[15px] shrink-0 rounded-[4px] border-[#cfd6e0] accent-[#eb6200] cursor-pointer disabled:cursor-default"
+                />
+                <span
+                  className={`text-[13.5px] font-medium ${isAdded ? 'text-[#a7afba]' : 'text-[#334155]'}`}
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    <i className={`${group.icon} text-[13px] ${isSelected ? 'text-[#eb6200]' : 'text-[#64748b]'}`}></i>
-                    <span className="truncate">{group.name}</span>
-                  </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-[#e2e8f0] text-[#64748b]'
-                  }`}>
-                    {countInGroup}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Charts Grid */}
-          <div className="flex-1 p-5 overflow-y-auto bg-white">
-            {filteredCharts.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-center text-[#8a93a0]">
-                <i className="icon-spyglass text-[32px] mb-2 opacity-50"></i>
-                <p className="text-sm font-semibold text-[#4a5462]">Nenhum gráfico encontrado</p>
-                <p className="text-xs text-[#8a93a0] mt-1">Tente buscar por outro termo ou selecione outro grupo.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredCharts.map(chart => {
-                  const groupInfo = CHART_GROUPS.find(g => g.id === chart.group);
-                  const isAlreadyAdded = existingChartIds.includes(chart.id);
-
-                  return (
-                    <div
-                      key={chart.id}
-                      className="border border-[#e0e5eb] rounded-lg p-4 bg-white hover:border-[#183a75] hover:shadow-md transition-all flex flex-col justify-between group"
-                    >
-                      <div>
-                        {/* Group badge and icon */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-[10.5px] font-semibold text-[#183a75] bg-[#183a75]/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <i className={`${groupInfo?.icon || 'icon-performance'} text-[10px]`}></i>
-                            <span>{groupInfo?.name.split('(')[0].trim() || 'Geral'}</span>
-                          </span>
-
-                          <span className="text-[10px] text-[#8a93a0] font-medium">
-                            Padrão: {chart.defaultType}
-                          </span>
-                        </div>
-
-                        {/* Title & Subtitle */}
-                        <h3 className="text-[14px] font-bold text-[#183a75] group-hover:text-[#eb6200] transition-colors">
-                          {chart.title}
-                        </h3>
-                        <p className="text-[11px] text-[#6b7684] mt-0.5 font-medium">
-                          {chart.subtitle}
-                        </p>
-                        <p className="text-[11.5px] text-[#4a5462] mt-2 line-clamp-2 leading-relaxed">
-                          {chart.description}
-                        </p>
-
-                        {/* Supported chart types pills */}
-                        <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] text-[#8a93a0] mr-1">Formatos:</span>
-                          {chart.allowedTypes.map(type => (
-                            <span
-                              key={type}
-                              className="text-[9.5px] font-medium bg-[#f0f4f8] text-[#4a5462] px-1.5 py-0.5 rounded border border-[#e2e8f0]"
-                            >
-                              {type}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Add Button */}
-                      <div className="mt-4 pt-3 border-t border-[#f0f3f7] flex items-center justify-between">
-                        {isAlreadyAdded && (
-                          <span className="text-[10.5px] text-[#0f6b3f] font-semibold flex items-center gap-1">
-                            <i className="icon-calendar-today text-[11px]"></i>
-                            <span>No Dashboard</span>
-                          </span>
-                        )}
-                        {!isAlreadyAdded && <span></span>}
-
-                        <button
-                          onClick={() => {
-                            onSelectChart(chart);
-                            onClose();
-                          }}
-                          className="h-7 px-3 bg-[#eb6200] hover:bg-[#cf5700] text-white text-[11.5px] font-bold rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
-                        >
-                          <i className="icon-plus text-[10px]"></i>
-                          <span>Adicionar</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                  {chart.title}
+                </span>
+              </label>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        <div className="p-3 px-6 bg-[#f8fafc] border-t border-[#e5e9f0] flex items-center justify-between text-xs text-[#6b7684]">
-          <span>Selecione quantos gráficos desejar para personalizar a visão do seu Dashboard.</span>
+        <div className="p-5 pt-4 flex items-center gap-3 shrink-0">
+          <button
+            onClick={handleAddSelected}
+            disabled={selectedIds.size === 0}
+            className="flex-[1.6] h-11 rounded-full bg-[#eb6200] hover:bg-[#cf5700] disabled:bg-[#f3c9a8] disabled:cursor-not-allowed text-white text-[13.5px] font-bold transition-colors cursor-pointer active:scale-[0.98]"
+          >
+            Adicionar selecionados
+          </button>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#334155] font-semibold rounded transition-colors cursor-pointer"
+            className="flex-1 h-11 rounded-full bg-[#e7eaee] hover:bg-[#dde1e7] text-[#4a5462] text-[13.5px] font-bold transition-colors cursor-pointer"
           >
-            Fechar
+            Cancelar
           </button>
         </div>
       </div>

@@ -13,10 +13,10 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     const hasSecondary = data.some(d => d.valueSecondary !== undefined);
 
     return (
-      <div className="w-full py-2">
+      <div className="w-full h-full py-2 flex flex-col">
         {/* Legend if secondary exists */}
         {hasSecondary && (
-          <div className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-3 pr-2">
+          <div className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-3 pr-2 shrink-0">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-xs bg-[#183a75]"></span>
               <span>{meta?.legendPrimary || 'Realizado'}</span>
@@ -28,9 +28,9 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
           </div>
         )}
 
-        <div className="relative w-full">
+        <div className="relative w-full flex-1 min-h-0 flex flex-col">
           {/* Ticks and Grid lines */}
-          <div className="ml-[120px] relative min-h-[140px]">
+          <div className="ml-[120px] relative flex-1 min-h-[100px]">
             <div className="absolute inset-0 flex justify-between pointer-events-none">
               {ticks.map((tick, idx) => (
                 <div
@@ -112,7 +112,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
               })}
             </div>
           </div>
-          <div className="ml-[120px] border-b border-[#cbd5e1] mt-6"></div>
+          <div className="ml-[120px] border-b border-[#cbd5e1] mt-6 shrink-0"></div>
         </div>
       </div>
     );
@@ -123,10 +123,10 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     const hasSecondary = data.some(d => d.valueSecondary !== undefined);
 
     return (
-      <div className="w-full py-2 flex flex-col justify-between h-[210px]">
+      <div className="w-full h-full py-2 flex flex-col justify-between">
         {/* Header Legend if secondary exists */}
         {hasSecondary && (
-          <div className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-1 pr-2">
+          <div className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-1 pr-2 shrink-0">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-xs bg-[#183a75]"></span>
               <span>{meta?.legendPrimary || 'Realizado'}</span>
@@ -138,7 +138,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
           </div>
         )}
 
-        <div className="flex-1 flex items-end justify-around gap-2 px-3 border-b border-[#cbd5e1] pb-2 relative">
+        <div className="flex-1 min-h-0 flex items-end justify-around gap-2 px-3 border-b border-[#cbd5e1] pb-2 relative">
           {data.map(item => {
             const hPct = Math.min(100, Math.max(4, (item.value / maxScale) * 100));
             const hSecPct = item.valueSecondary !== undefined
@@ -151,7 +151,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   {item.value}
                 </span>
 
-                <div className="w-full flex items-end justify-center gap-1 h-[130px]">
+                <div className="w-full flex items-end justify-center gap-1 flex-1 min-h-0">
                   {item.valueSecondary !== undefined && (
                     <div
                       className="w-1/2 max-w-[14px] bg-[#cdd6e6] rounded-t-[2px] transition-all hover:opacity-80"
@@ -208,8 +208,8 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     }, '');
 
     return (
-      <div className="w-full py-2 flex flex-col justify-between h-[210px]">
-        <div className="relative w-full h-[160px] flex items-center justify-center">
+      <div className="w-full h-full py-2 flex flex-col justify-between">
+        <div className="relative w-full flex-1 min-h-[100px] flex items-center justify-center">
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
             {/* Grid horizontal lines */}
             {[0.25, 0.5, 0.75, 1].map(ratio => {
@@ -313,7 +313,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
       .join(', ');
 
     return (
-      <div className="w-full py-4 flex flex-col sm:flex-row items-center justify-around gap-6 min-h-[200px]">
+      <div className="w-full h-full py-4 flex flex-col sm:flex-row items-center justify-around gap-6">
         {/* Donut graphic */}
         <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-md flex items-center justify-center shrink-0"
           style={{
@@ -327,7 +327,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
         </div>
 
         {/* Legend Breakdown */}
-        <div className="flex-1 max-w-[240px] space-y-2 text-xs">
+        <div className="flex-1 min-h-0 max-w-[240px] w-full space-y-2 text-xs overflow-y-auto">
           {slices.map(item => (
             <div key={item.label} className="flex items-center justify-between gap-2 p-1 rounded hover:bg-[#f8fafc]">
               <div className="flex items-center gap-2 truncate">
@@ -353,7 +353,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
   // 5. Table / Summary View
   if (chartType === 'Tabela') {
     return (
-      <div className="w-full py-2 overflow-x-auto">
+      <div className="w-full h-full py-2 overflow-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-[#f8fafc] text-[#4a5462] font-semibold border-b border-[#dfe4ea]">

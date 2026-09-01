@@ -66,3 +66,149 @@
 .print-block {
   display: none;
 }
+
+/* ==========================================================================
+   Dashboard card grid — drag & resize (react-grid-layout)
+   ========================================================================== */
+
+.dash-grid {
+  position: relative;
+}
+
+.dash-grid .react-grid-item {
+  transition: transform 200ms ease, width 200ms ease, height 200ms ease;
+}
+
+.dash-grid .react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+  cursor: grabbing;
+  box-shadow: 0 12px 28px -6px rgba(24, 58, 117, 0.35);
+}
+
+.dash-grid .react-grid-item.resizing {
+  transition: none;
+  z-index: 20;
+  box-shadow: 0 8px 22px -6px rgba(24, 58, 117, 0.28);
+}
+
+.dash-grid .react-grid-placeholder {
+  background: rgba(24, 58, 117, 0.07);
+  border-radius: 6px;
+  z-index: 1;
+}
+
+.dash-card-drag-handle {
+  cursor: grab;
+}
+.dash-grid .react-grid-item.react-draggable-dragging .dash-card-drag-handle {
+  cursor: grabbing;
+}
+
+/* Resize handles: fully invisible at rest — only the cursor hints they're there.
+   Each handle reveals its own subtle marker only while the pointer is directly over it,
+   so hovering the card never lights up all eight at once. */
+.dash-grid .react-grid-item > .react-resizable-handle {
+  position: absolute;
+  z-index: 10;
+}
+.dash-grid .react-grid-item.react-resizable-hide > .react-resizable-handle {
+  display: none;
+}
+.dash-grid .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  background: #183a75;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  border-radius: 2px;
+}
+.dash-grid .react-resizable-handle:hover::after {
+  opacity: 0.55;
+}
+
+/* Corner handles: tiny hit zones, marked by a small dot only on hover */
+.dash-grid .react-resizable-handle-se,
+.dash-grid .react-resizable-handle-sw,
+.dash-grid .react-resizable-handle-ne,
+.dash-grid .react-resizable-handle-nw {
+  width: 14px;
+  height: 14px;
+}
+.dash-grid .react-resizable-handle-se::after,
+.dash-grid .react-resizable-handle-sw::after,
+.dash-grid .react-resizable-handle-ne::after,
+.dash-grid .react-resizable-handle-nw::after {
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+.dash-grid .react-resizable-handle-se {
+  bottom: -4px;
+  right: -4px;
+  cursor: se-resize;
+}
+.dash-grid .react-resizable-handle-sw {
+  bottom: -4px;
+  left: -4px;
+  cursor: sw-resize;
+}
+.dash-grid .react-resizable-handle-ne {
+  top: -4px;
+  right: -4px;
+  cursor: ne-resize;
+}
+.dash-grid .react-resizable-handle-nw {
+  top: -4px;
+  left: -4px;
+  cursor: nw-resize;
+}
+
+/* Edge handles: thin invisible strips along each side, like modern editing tools */
+.dash-grid .react-resizable-handle-e,
+.dash-grid .react-resizable-handle-w {
+  top: 10px;
+  bottom: 10px;
+  width: 10px;
+  height: auto;
+  cursor: ew-resize;
+}
+.dash-grid .react-resizable-handle-e {
+  right: -5px;
+}
+.dash-grid .react-resizable-handle-w {
+  left: -5px;
+}
+.dash-grid .react-resizable-handle-n,
+.dash-grid .react-resizable-handle-s {
+  left: 10px;
+  right: 10px;
+  width: auto;
+  height: 10px;
+  cursor: ns-resize;
+}
+.dash-grid .react-resizable-handle-n {
+  top: -5px;
+}
+.dash-grid .react-resizable-handle-s {
+  bottom: -5px;
+}
+.dash-grid .react-resizable-handle-e::after,
+.dash-grid .react-resizable-handle-w::after {
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+}
+.dash-grid .react-resizable-handle-n::after,
+.dash-grid .react-resizable-handle-s::after {
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 3px;
+  transform: translate(-50%, -50%);
+}

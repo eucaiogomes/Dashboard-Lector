@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import GridLayout, { LayoutItem, useContainerWidth } from 'react-grid-layout';
 import {
   CHART_CATALOG,
   CHART_GROUPS,
@@ -11,10 +12,37 @@ import { DashboardChartRenderer } from './DashboardChartRenderer';
 import { AddChartModal } from './AddChartModal';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ViewType } from '../types';
+import {
+  GRID_COLS,
+  GRID_MARGIN,
+  ROW_HEIGHT,
+  buildDefaultLayout,
+  loadStoredLayout,
+  reconcileLayout,
+  saveStoredLayout
+} from '../utils/gridLayout';
 
 interface DashboardViewProps {
   onGoToIndicadores?: (subView?: ViewType) => void;
 }
+
+/** Mirrors the previous `lg:` Tailwind breakpoint that switched the card grid from a stacked
+ * single column to a multi-column layout — below it, drag/resize is disabled and cards stack. */
+const useIsDesktop = (breakpointPx = 1024): boolean => {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= breakpointPx
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${breakpointPx}px)`);
+    const handler = () => setIsDesktop(mql.matches);
+    handler();
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [breakpointPx]);
+
+  return isDesktop;
+};
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onGoToIndicadores }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('Agosto - 2026');
@@ -50,8 +78,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onGoToIndicadores 
   // Initial cards: All catalog charts
   const [cards, setCards] = useState<DashboardCardItem[]>(() => createAllCards('Agosto - 2026'));
 
+  // Card layout (position/size on the grid) — restored from localStorage when available,
+  // otherwise falls back to the default 2-column arrangement.
+  const [layout, setLayout] = useState<LayoutItem[]>(() => {
+    const cardIds = cards.map(c => c.id);
+    const stored = loadStoredLayout();
+    return stored.length > 0 ? reconcileLayout(stored, cardIds) : buildDefaultLayout(cardIds);
+  });
+
+  const isDesktop = useIsDesktop();
+  const { width: gridWidth, mounted: gridMounted, containerRef: gridContainerRef } = useContainerWidth();
+
+  useEffect(() => {
+    saveStoredLayout(layout);
+  }, [layout]);
+
+  // `cards` and `layout` are updated together, synchronously, at every mutation site below
+  // (add/remove/reset) rather than via a separate effect reacting to `cards`. This matters:
+  // react-grid-layout also auto-assigns a (tiny, useless) default slot to any child it renders
+  // without a matching layout entry — if our own reconciliation instead ran a tick later in its
+  // own effect, the two would fight over the new card's slot every render and loop forever.
   const handleRemoveCard = (cardId: string) => {
     setCards(prev => prev.filter(c => c.id !== cardId));
+    setLayout(prev => prev.filter(item => item.i !== cardId));
   };
 
   const handleAddChartFromCatalog = (chartDef: CatalogChartDef) => {
@@ -75,6 +124,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onGoToIndicadores 
     };
 
     setCards(prev => [...prev, newCard]);
+    setLayout(prev => reconcileLayout(prev, [...prev.map(item => item.i), newCard.id]));
   };
 
   const handleChangeChartType = (cardId: string, newType: SupportedChartType) => {
@@ -105,10 +155,147 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onGoToIndicadores 
   };
 
   const handleResetDefaultCards = () => {
-    setCards(createAllCards(selectedPeriod));
+    const defaultCards = createAllCards(selectedPeriod);
+    setCards(defaultCards);
+    setLayout(buildDefaultLayout(defaultCards.map(c => c.id)));
   };
 
   const existingChartIds = cards.map(c => c.catalogId);
+
+  const renderCard = (card: DashboardCardItem, options: { interactive: boolean; heightPx?: number }) => {
+    const groupInfo = CHART_GROUPS.find(g => g.id === card.group);
+
+    return (
+      <div
+        key={card.id}
+        style={options.heightPx ? { height: options.heightPx } : undefined}
+        className="h-full w-full bg-white rounded-[6px] border border-[#e0e5eb] shadow-2xs p-5 flex flex-col hover:border-[#cfd8e3] transition-all relative"
+      >
+        {/* Card Top Header with Internal Category Filter and Close Button */}
+        <div
+          className={`pb-2 border-b border-[#f0f3f7] shrink-0 ${
+            options.interactive ? 'dash-card-drag-handle' : ''
+          }`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1 flex items-start gap-1.5">
+              {options.interactive && (
+                <i
+                  className="icon-menu-dots text-[12px] text-[#c3cad4] mt-1 shrink-0 rotate-90"
+                  title="Arraste para mover o card"
+                  aria-hidden="true"
+                ></i>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-[15.5px] font-bold text-[#183a75] tracking-tight">
+                    {card.title}
+                  </h2>
+                  {groupInfo && (
+                    <span className="text-[9.5px] font-bold text-[#183a75] bg-[#183a75]/10 px-1.5 py-0.5 rounded">
+                      {groupInfo.name.split('(')[0].trim()}
+                    </span>
+                  )}
+                </div>
+
+                {card.subtitle && (
+                  <p className="text-[11px] text-[#6b7684] mt-0.5 font-medium truncate">
+                    {card.subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons on the right of the card header */}
+            <div className="flex items-center gap-2 shrink-0 no-drag">
+              {/* Tipo de Treinamento Dropdown inside the chart card */}
+              <div className="relative">
+                <select
+                  value={card.selectedCategory}
+                  onChange={e => handleCardCategoryChange(card.id, e.target.value)}
+                  className="h-[28px] pl-2.5 pr-7 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cfd6e0] rounded text-[11.5px] text-[#334155] font-semibold appearance-none cursor-pointer outline-none focus:border-[#183a75] transition-colors max-w-[190px] sm:max-w-[210px] truncate"
+                  title="Filtrar tipo de treinamento neste gráfico"
+                >
+                  {card.availableCategories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#eb6200] text-[9px]">
+                  <i className="icon-pointer-down"></i>
+                </div>
+              </div>
+
+              {/* Remove card button */}
+              <button
+                onClick={() => handleRemoveCard(card.id)}
+                className="text-[#8a93a0] hover:text-[#eb6200] p-1 transition-colors cursor-pointer rounded hover:bg-[#f5f8fa]"
+                title="Remover gráfico do Dashboard"
+              >
+                <i className="icon-close-mini text-[14px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Chart Graphic Area */}
+        <div
+          className={`py-2 flex-1 min-h-0 flex flex-col ${
+            card.chartType === 'Tabela' ? 'overflow-auto' : 'overflow-hidden'
+          }`}
+        >
+          <DashboardChartRenderer card={card} />
+        </div>
+
+        {/* Card Footer / Chart Type Selector & Detailed Indicators CTA */}
+        <div className="pt-3 mt-3 border-t border-[#f0f3f7] shrink-0 flex flex-wrap items-center justify-between gap-2 text-[12.5px] no-drag">
+          <div className="flex items-center gap-1.5 text-[#606d80] relative">
+            <span>Tipo de gráfico:</span>
+            <button
+              onClick={() => setOpenTypeDropdown(openTypeDropdown === card.id ? null : card.id)}
+              className="font-semibold text-[#eb6200] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{card.chartType}</span>
+              <i className="icon-pointer-down text-[9px]"></i>
+            </button>
+
+            {/* Chart type dropdown menu */}
+            {openTypeDropdown === card.id && (
+              <div className="absolute left-24 bottom-6 bg-white border border-[#dfe4ea] rounded-[4px] shadow-lg py-1 z-30 min-w-[120px]">
+                {card.allowedTypes.map(t => (
+                  <button
+                    key={t}
+                    onClick={() => handleChangeChartType(card.id, t)}
+                    className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f5f8fa] hover:text-[#183a75] flex items-center justify-between cursor-pointer ${
+                      card.chartType === t
+                        ? 'text-[#eb6200] font-bold bg-[#eb6200]/5'
+                        : 'text-[#4a5462]'
+                    }`}
+                  >
+                    <span>{t}</span>
+                    {card.chartType === t && <i className="icon-calendar-today text-[10px]"></i>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Ver Indicadores T&D Detalhados Action Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedCardForModal(card)}
+              className="px-2.5 py-1.5 bg-[#183a75]/8 hover:bg-[#183a75] text-[#183a75] hover:text-white text-[11.5px] font-bold rounded border border-[#183a75]/20 hover:border-[#183a75] flex items-center gap-1.5 transition-all cursor-pointer group shadow-2xs active:scale-95"
+              title="Abrir modal com o gráfico em destaque e o relatório analítico completo da aba Indicadores T&D"
+            >
+              <i className="icon-performance text-[12px] text-[#eb6200] group-hover:text-white transition-colors"></i>
+              <span>Ver Indicadores T&amp;D Detalhados</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -185,128 +372,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onGoToIndicadores 
             Explorar Catálogo de Gráficos
           </button>
         </div>
+      ) : isDesktop ? (
+        /* Cards Grid — desktop: drag to reposition, resize from any edge/corner */
+        <div ref={gridContainerRef}>
+          {gridMounted && (
+            <GridLayout
+              width={gridWidth}
+              layout={layout}
+              onLayoutChange={setLayout}
+              className="dash-grid"
+              gridConfig={{ cols: GRID_COLS, rowHeight: ROW_HEIGHT, margin: GRID_MARGIN }}
+              dragConfig={{ handle: '.dash-card-drag-handle', cancel: 'select, button, .no-drag' }}
+              resizeConfig={{ handles: ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] }}
+            >
+              {cards.map(card => renderCard(card, { interactive: true }))}
+            </GridLayout>
+          )}
+        </div>
       ) : (
-        /* Cards Grid */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        /* Cards Grid — mobile/tablet: stacked single column, position/size editing is desktop-only */
+        <div className="grid grid-cols-1 gap-5">
           {cards.map(card => {
-            const groupInfo = CHART_GROUPS.find(g => g.id === card.group);
-
-            return (
-              <div
-                key={card.id}
-                className="bg-white rounded-[6px] border border-[#e0e5eb] shadow-2xs p-5 flex flex-col justify-between hover:border-[#cfd8e3] transition-all relative"
-              >
-                {/* Card Top Header with Internal Category Filter and Close Button */}
-                <div className="pb-2 border-b border-[#f0f3f7]">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-[15.5px] font-bold text-[#183a75] tracking-tight">
-                          {card.title}
-                        </h2>
-                        {groupInfo && (
-                          <span className="text-[9.5px] font-bold text-[#183a75] bg-[#183a75]/10 px-1.5 py-0.5 rounded">
-                            {groupInfo.name.split('(')[0].trim()}
-                          </span>
-                        )}
-                      </div>
-
-                      {card.subtitle && (
-                        <p className="text-[11px] text-[#6b7684] mt-0.5 font-medium truncate">
-                          {card.subtitle}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Action buttons on the right of the card header */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      {/* Tipo de Treinamento Dropdown inside the chart card */}
-                      <div className="relative">
-                        <select
-                          value={card.selectedCategory}
-                          onChange={e => handleCardCategoryChange(card.id, e.target.value)}
-                          className="h-[28px] pl-2.5 pr-7 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#cfd6e0] rounded text-[11.5px] text-[#334155] font-semibold appearance-none cursor-pointer outline-none focus:border-[#183a75] transition-colors max-w-[190px] sm:max-w-[210px] truncate"
-                          title="Filtrar tipo de treinamento neste gráfico"
-                        >
-                          {card.availableCategories.map(cat => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#eb6200] text-[9px]">
-                          <i className="icon-pointer-down"></i>
-                        </div>
-                      </div>
-
-                      {/* Remove card button */}
-                      <button
-                        onClick={() => handleRemoveCard(card.id)}
-                        className="text-[#8a93a0] hover:text-[#eb6200] p-1 transition-colors cursor-pointer rounded hover:bg-[#f5f8fa]"
-                        title="Remover gráfico do Dashboard"
-                      >
-                        <i className="icon-close-mini text-[14px]"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chart Graphic Area */}
-                <div className="py-2 my-auto min-h-[220px] flex flex-col justify-center">
-                  <DashboardChartRenderer card={card} />
-                </div>
-
-                {/* Card Footer / Chart Type Selector & Detailed Indicators CTA */}
-                <div className="pt-3 mt-3 border-t border-[#f0f3f7] flex flex-wrap items-center justify-between gap-2 text-[12.5px]">
-                  <div className="flex items-center gap-1.5 text-[#606d80] relative">
-                    <span>Tipo de gráfico:</span>
-                    <button
-                      onClick={() =>
-                        setOpenTypeDropdown(openTypeDropdown === card.id ? null : card.id)
-                      }
-                      className="font-semibold text-[#eb6200] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{card.chartType}</span>
-                      <i className="icon-pointer-down text-[9px]"></i>
-                    </button>
-
-                    {/* Chart type dropdown menu */}
-                    {openTypeDropdown === card.id && (
-                      <div className="absolute left-24 bottom-6 bg-white border border-[#dfe4ea] rounded-[4px] shadow-lg py-1 z-30 min-w-[120px]">
-                        {card.allowedTypes.map(t => (
-                          <button
-                            key={t}
-                            onClick={() => handleChangeChartType(card.id, t)}
-                            className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f5f8fa] hover:text-[#183a75] flex items-center justify-between cursor-pointer ${
-                              card.chartType === t
-                                ? 'text-[#eb6200] font-bold bg-[#eb6200]/5'
-                                : 'text-[#4a5462]'
-                            }`}
-                          >
-                            <span>{t}</span>
-                            {card.chartType === t && (
-                              <i className="icon-calendar-today text-[10px]"></i>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ver Indicadores T&D Detalhados Action Button */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSelectedCardForModal(card)}
-                      className="px-2.5 py-1.5 bg-[#183a75]/8 hover:bg-[#183a75] text-[#183a75] hover:text-white text-[11.5px] font-bold rounded border border-[#183a75]/20 hover:border-[#183a75] flex items-center gap-1.5 transition-all cursor-pointer group shadow-2xs active:scale-95"
-                      title="Abrir modal com o gráfico em destaque e o relatório analítico completo da aba Indicadores T&D"
-                    >
-                      <i className="icon-performance text-[12px] text-[#eb6200] group-hover:text-white transition-colors"></i>
-                      <span>Ver Indicadores T&amp;D Detalhados</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
+            const item = layout.find(l => l.i === card.id);
+            const heightPx = item ? item.h * ROW_HEIGHT + (item.h - 1) * GRID_MARGIN[1] : undefined;
+            return renderCard(card, { interactive: false, heightPx });
           })}
         </div>
       )}
