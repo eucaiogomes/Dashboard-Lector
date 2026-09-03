@@ -44,7 +44,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 type="button"
                 onClick={() => setOpenDropdown(isOpen ? null : filter.label)}
                 className={`flex items-center gap-2 h-9 px-3 bg-white border text-left rounded-[6px] text-xs transition-all shadow-2xs hover:border-[#b6bdc7] cursor-pointer ${
-                  isOpen ? 'border-[#183a75] ring-1 ring-[#183a75]' : 'border-[#dfe4ea]'
+                  isOpen ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#dfe4ea]'
                 }`}
               >
                 <span className="text-[#8a93a0] text-[11px] uppercase tracking-wider whitespace-nowrap font-medium">
@@ -53,7 +53,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 <span className="font-semibold text-[#1f2733] whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px]">
                   {filter.value}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#eb6200] shrink-0" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#f47920] shrink-0" />
               </button>
 
               {/* Dropdown Popover */}
@@ -70,11 +70,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                           setOpenDropdown(null);
                         }}
                         className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-[#f6f8fa] transition-colors cursor-pointer ${
-                          isSelected ? 'text-[#183a75] font-bold bg-[#eef0f3]/60' : 'text-[#4a5462]'
+                          isSelected ? 'text-[#004e4c] font-bold bg-[#eef0f3]/60' : 'text-[#4a5462]'
                         }`}
                       >
                         <span className="truncate">{option}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#eb6200]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#f47920]" />}
                       </button>
                     );
                   })}

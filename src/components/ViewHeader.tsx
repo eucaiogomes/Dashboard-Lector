@@ -42,9 +42,9 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
             <span className="text-[#b6bdc7]">/</span>
             <span>Indicadores T&amp;D</span>
             <span className="text-[#b6bdc7]">/</span>
-            <span className="text-[#eb6200] font-semibold">{view}</span>
+            <span className="text-[#f47920] font-semibold">{view}</span>
           </div>
-          <h1 className="mt-1.5 text-[26px] font-bold text-[#183a75] tracking-tight">
+          <h1 className="mt-1.5 text-[26px] font-bold text-[#004e4c] tracking-tight">
             {view}
           </h1>
           <p className="mt-1 text-[13.5px] text-[#6b7684] max-w-[820px] leading-relaxed">
@@ -54,21 +54,21 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
 
         <div className="flex items-center gap-2.5">
           {exportStatus && (
-            <span className="text-xs text-[#183a75] bg-[#eef0f3] px-2.5 py-1 rounded flex items-center gap-1 font-medium animate-pulse">
+            <span className="text-xs text-[#004e4c] bg-[#eef0f3] px-2.5 py-1 rounded flex items-center gap-1 font-medium animate-pulse">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#0f6b3f]" />
               {exportStatus}
             </span>
           )}
           <button
             onClick={onExportExcel}
-            className="h-[38px] px-4 border border-[#cfd6e0] bg-white hover:border-[#183a75] hover:bg-[#f6f8fa] text-[#183a75] text-[13px] font-semibold rounded-[4px] cursor-pointer transition-colors flex items-center gap-2 shadow-2xs active:scale-[0.98]"
+            className="h-[38px] px-4 border border-[#cfd6e0] bg-white hover:border-[#004e4c] hover:bg-[#f6f8fa] text-[#004e4c] text-[13px] font-semibold rounded-[4px] cursor-pointer transition-colors flex items-center gap-2 shadow-2xs active:scale-[0.98]"
           >
             <FileSpreadsheet className="w-4 h-4 text-[#0f6b3f]" />
             Exportar Excel
           </button>
           <button
             onClick={onExportPdf}
-            className="h-[38px] px-4 border-none bg-[#eb6200] hover:bg-[#cf5700] text-white text-[13px] font-semibold rounded-[4px] cursor-pointer transition-colors flex items-center gap-2 shadow-2xs active:scale-[0.98]"
+            className="h-[38px] px-4 border-none bg-[#00995d] hover:bg-[#00824f] text-white text-[13px] font-semibold rounded-[4px] cursor-pointer transition-colors flex items-center gap-2 shadow-2xs active:scale-[0.98]"
           >
             <FileText className="w-4 h-4 text-white" />
             Gerar PDF
@@ -86,8 +86,8 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
               onClick={() => onViewChange(v)}
               className={`h-[38px] px-4.5 border-none bg-transparent text-[13.5px] font-semibold cursor-pointer transition-all ${
                 isActive
-                  ? 'text-[#183a75] border-b-[3px] border-[#eb6200] font-bold'
-                  : 'text-[#6b7684] hover:text-[#183a75] border-b-[3px] border-transparent'
+                  ? 'text-[#004e4c] border-b-[3px] border-[#f47920] font-bold'
+                  : 'text-[#6b7684] hover:text-[#004e4c] border-b-[3px] border-transparent'
               }`}
             >
               {v}

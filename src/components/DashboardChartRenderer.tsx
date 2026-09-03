@@ -33,11 +33,11 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-3 pr-2 shrink-0"
           >
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-[#183a75]"></span>
+              <span className="w-3 h-3 rounded-xs bg-[#004e4c]"></span>
               <span>{meta?.legendPrimary || 'Realizado'}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-[#cdd6e6]"></span>
+              <span className="w-3 h-3 rounded-xs bg-[#cde3bb]"></span>
               <span>{meta?.legendSecondary || 'Previsto'}</span>
             </div>
           </motion.div>
@@ -99,7 +99,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                               duration: 0.7,
                               ease: [0.25, 0.46, 0.45, 0.94]
                             }}
-                            className="h-3 rounded-xs bg-[#cdd6e6] group relative overflow-hidden"
+                            className="h-3 rounded-xs bg-[#cde3bb] group relative overflow-hidden"
                           >
                             <motion.div
                               initial={{ x: '-100%' }}
@@ -121,7 +121,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                               ease: [0.25, 0.46, 0.45, 0.94]
                             }}
                             className="h-4 rounded-xs shadow-2xs group relative overflow-hidden"
-                            style={{ backgroundColor: item.color || '#183a75' }}
+                            style={{ backgroundColor: item.color || '#004e4c' }}
                           >
                             <motion.div
                               initial={{ x: '-100%' }}
@@ -129,7 +129,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                               transition={{ delay: 1.0 + idx * 0.1, duration: 0.6 }}
                               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                             />
-                            <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0 bg-[#183a75] text-white text-[9.5px] px-1 py-0.5 rounded pointer-events-none whitespace-nowrap z-20">
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0 bg-[#004e4c] text-white text-[9.5px] px-1 py-0.5 rounded pointer-events-none whitespace-nowrap z-20">
                               Realizado: {item.value} {card.unit || ''}
                             </span>
                           </motion.div>
@@ -144,7 +144,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                             ease: [0.25, 0.46, 0.45, 0.94]
                           }}
                           className="h-6 rounded-[2px] shadow-2xs group relative flex items-center justify-end pr-1.5 overflow-hidden"
-                          style={{ backgroundColor: item.color || '#183a75' }}
+                          style={{ backgroundColor: item.color || '#004e4c' }}
                         >
                           <motion.div
                             initial={{ x: '-100%' }}
@@ -162,7 +162,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                               {item.value} {card.unit === '%' ? '%' : ''}
                             </motion.span>
                           )}
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 right-0 bg-[#183a75] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-30">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 right-0 bg-[#004e4c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-30">
                             {item.value} {card.unit || ''}
                           </div>
                         </motion.div>
@@ -200,11 +200,11 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-1 pr-2 shrink-0"
           >
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-[#183a75]"></span>
+              <span className="w-3 h-3 rounded-xs bg-[#004e4c]"></span>
               <span>{meta?.legendPrimary || 'Realizado'}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-[#cdd6e6]"></span>
+              <span className="w-3 h-3 rounded-xs bg-[#cde3bb]"></span>
               <span>{meta?.legendSecondary || 'Previsto'}</span>
             </div>
           </motion.div>
@@ -229,7 +229,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={isInView ? { opacity: 1, scale: 1 } : {}}
                   transition={{ delay: 0.5 + idx * 0.08, duration: 0.3, type: 'spring', stiffness: 300 }}
-                  className="text-[10px] font-bold text-[#183a75] mb-1 group-hover:scale-110 transition-transform"
+                  className="text-[10px] font-bold text-[#004e4c] mb-1 group-hover:scale-110 transition-transform"
                 >
                   {item.value}
                 </motion.span>
@@ -244,7 +244,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                         duration: 0.65,
                         ease: [0.25, 0.46, 0.45, 0.94]
                       }}
-                      className="w-1/2 max-w-[14px] bg-[#cdd6e6] rounded-t-[2px] hover:opacity-80 relative overflow-hidden"
+                      className="w-1/2 max-w-[14px] bg-[#cde3bb] rounded-t-[2px] hover:opacity-80 relative overflow-hidden"
                       title={`Previsto: ${item.valueSecondary}`}
                     >
                       <motion.div
@@ -264,7 +264,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       ease: [0.25, 0.46, 0.45, 0.94]
                     }}
                     className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[2px] hover:opacity-90 shadow-2xs relative overflow-hidden`}
-                    style={{ backgroundColor: item.color || '#183a75' }}
+                    style={{ backgroundColor: item.color || '#004e4c' }}
                     title={`${item.label}: ${item.value}`}
                   >
                     <motion.div
@@ -351,8 +351,8 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
 
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#eb6200" />
-                <stop offset="100%" stopColor="#183a75" />
+                <stop offset="0%" stopColor="#f47920" />
+                <stop offset="100%" stopColor="#004e4c" />
               </linearGradient>
             </defs>
 
@@ -369,7 +369,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             <motion.path
               d={pathD}
               fill="none"
-              stroke="#183a75"
+              stroke="#004e4c"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -388,7 +388,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   cx={p.x}
                   cy={p.y}
                   r="5"
-                  fill={p.color || '#eb6200'}
+                  fill={p.color || '#f47920'}
                   stroke="#ffffff"
                   strokeWidth="2"
                   initial={{ scale: 0, opacity: 0 }}
@@ -409,7 +409,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   textAnchor="middle"
                   fontSize="10"
                   fontWeight="bold"
-                  fill="#183a75"
+                  fill="#004e4c"
                   initial={{ opacity: 0, y: p.y - 4 }}
                   animate={isInView ? { opacity: 1, y: p.y - 9 } : {}}
                   transition={{ delay: 0.7 + idx * 0.12, duration: 0.3 }}
@@ -455,7 +455,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
 
     // Conic gradient string
     const conicStops = slices
-      .map(s => `${s.color || '#183a75'} ${s.startAngle}% ${s.endAngle}%`)
+      .map(s => `${s.color || '#004e4c'} ${s.startAngle}% ${s.endAngle}%`)
       .join(', ');
 
     return (
@@ -484,7 +484,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.7, duration: 0.3 }}
-              className="text-[14px] font-black text-[#183a75]"
+              className="text-[14px] font-black text-[#004e4c]"
             >
               {total}
             </motion.span>
@@ -515,7 +515,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   animate={isInView ? { scale: 1 } : {}}
                   transition={{ delay: 0.5 + idx * 0.08, duration: 0.25, type: 'spring', stiffness: 400 }}
                   className="w-3 h-3 rounded-xs shrink-0"
-                  style={{ backgroundColor: item.color || '#183a75' }}
+                  style={{ backgroundColor: item.color || '#004e4c' }}
                 ></motion.span>
                 <span className="text-[#4a5462] truncate text-[11.5px]" title={item.label}>
                   {item.label}
@@ -563,13 +563,13 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   transition={{ delay: 0.1 + idx * 0.07, duration: 0.35, ease: 'easeOut' }}
                   className="hover:bg-[#fdfefe]"
                 >
-                  <td className="py-2 px-3 font-medium text-[#183a75] flex items-center gap-2">
+                  <td className="py-2 px-3 font-medium text-[#004e4c] flex items-center gap-2">
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={isInView ? { scale: 1 } : {}}
                       transition={{ delay: 0.2 + idx * 0.07, duration: 0.25, type: 'spring', stiffness: 400 }}
                       className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color || '#183a75' }}
+                      style={{ backgroundColor: item.color || '#004e4c' }}
                     ></motion.span>
                     <span className="truncate max-w-[180px]">{item.label}</span>
                   </td>
@@ -586,7 +586,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={isInView ? { opacity: 1, scale: 1 } : {}}
                       transition={{ delay: 0.35 + idx * 0.07, duration: 0.3, type: 'spring', stiffness: 300 }}
-                      className="bg-[#183a75]/10 text-[#183a75] font-semibold px-2 py-0.5 rounded text-[10.5px] inline-block"
+                      className="bg-[#004e4c]/10 text-[#004e4c] font-semibold px-2 py-0.5 rounded text-[10.5px] inline-block"
                     >
                       {pct}%
                     </motion.span>

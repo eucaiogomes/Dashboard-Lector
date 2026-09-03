@@ -6,7 +6,7 @@ interface SheetColumn {
   align?: 'left' | 'center' | 'right';
 }
 
-function bar(v: number, max: number, color = '#183A75'): string {
+function bar(v: number, max: number, color = '#004e4c'): string {
   const n = Math.max(1, Math.round((v / (max || 1)) * 14));
   return (
     '<span style="font-family:Consolas,monospace;color:' +
@@ -37,7 +37,7 @@ function xlsSheet(
   const th = cols
     .map(
       c =>
-        `<th style="background:#183A75;color:#FFFFFF;font-weight:700;font-size:10pt;border:1px solid #0F2A57;padding:7px 8px;text-align:${c.align || 'left'};vertical-align:middle;">${c.label}</th>`
+        `<th style="background:#004e4c;color:#FFFFFF;font-weight:700;font-size:10pt;border:1px solid #0F2A57;padding:7px 8px;text-align:${c.align || 'left'};vertical-align:middle;">${c.label}</th>`
     )
     .join('');
 
@@ -60,7 +60,7 @@ function xlsSheet(
     ? `<tr>${totals
         .map((cell, i) => {
           const c = cols[i] ?? defaultCol;
-          return `<td style="background:#DDE4EF;border:1px solid #B9C5DA;padding:6px 8px;font-size:10pt;font-weight:700;color:#183A75;text-align:${c.align || 'left'};mso-number-format:\\@;">${cell}</td>`;
+          return `<td style="background:#DDE4EF;border:1px solid #B9C5DA;padding:6px 8px;font-size:10pt;font-weight:700;color:#004e4c;text-align:${c.align || 'left'};mso-number-format:\\@;">${cell}</td>`;
         })
         .join('')}</tr>`
     : '';
@@ -71,8 +71,8 @@ function xlsSheet(
   return (
     `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;">` +
     colTags +
-    `<tr><td colspan="${n}" style="height:8px;background:#EB6200;"></td></tr>` +
-    `<tr><td colspan="${n}" style="height:30px;font-size:15pt;font-weight:700;color:#183A75;">${title}</td></tr>` +
+    `<tr><td colspan="${n}" style="height:8px;background:#f47920;"></td></tr>` +
+    `<tr><td colspan="${n}" style="height:30px;font-size:15pt;font-weight:700;color:#004e4c;">${title}</td></tr>` +
     `<tr><td colspan="${n}" style="height:18px;font-size:9.5pt;color:#4A5462;">${sub}</td></tr>` +
     `<tr><td colspan="${n}" style="height:16px;font-size:8.5pt;color:#8A93A0;">Lector Live · Unimed Volta Redonda — emitido em 31/08/2026 07h12</td></tr>` +
     `<tr><td colspan="${n}" style="height:8px;"></td></tr>` +
@@ -401,4 +401,100 @@ export function exportToExcel(
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+interface ReportTableColumn {
+  key: string;
+  label: string;
+  align?: 'left' | 'right' | 'center';
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+/** Exports a single report table (as shown in the "Ver Detalhes" overlay) to a real CSV file. */
+export function exportTableToCsv(
+  title: string,
+  columns: ReportTableColumn[],
+  rows: Record<string, string | number>[]
+) {
+  const escapeCsv = (v: string | number) => {
+    const s = String(v ?? '');
+    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const lines = [
+    columns.map(c => escapeCsv(c.label)).join(';'),
+    ...rows.map(r => columns.map(c => escapeCsv(r[c.key])).join(';'))
+  ];
+
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  downloadBlob(blob, `${slugify(title)}.csv`);
+}
+
+/** Exports a single report table to an .xls file readable by Excel (HTML-table trick, same
+ * technique as exportToExcel above, simplified to one plain sheet). */
+export function exportTableToXls(
+  title: string,
+  subtitle: string,
+  columns: ReportTableColumn[],
+  rows: Record<string, string | number>[]
+) {
+  const th = columns
+    .map(
+      c =>
+        `<th style="background:#004e4c;color:#FFFFFF;font-weight:700;font-size:10pt;border:1px solid #0F2A57;padding:7px 8px;text-align:${c.align || 'left'};">${c.label}</th>`
+    )
+    .join('');
+
+  const tr = rows
+    .map((r, ri) => {
+      const cells = columns
+        .map(c => {
+          const val = r[c.key] ?? '';
+          const numeric = typeof val === 'number';
+          return `<td style="background:${ri % 2 ? '#F4F7FB' : '#FFFFFF'};border:1px solid #D7DEE9;padding:5px 8px;font-size:10pt;color:#1F2733;text-align:${c.align || 'left'};${numeric ? '' : 'mso-number-format:\\@;'}">${val}</td>`;
+        })
+        .join('');
+      return `<tr>${cells}</tr>`;
+    })
+    .join('');
+
+  const n = columns.length;
+  const table =
+    `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;">` +
+    columns.map(() => '<col width="150" />').join('') +
+    `<tr><td colspan="${n}" style="height:8px;background:#f47920;"></td></tr>` +
+    `<tr><td colspan="${n}" style="height:30px;font-size:15pt;font-weight:700;color:#004e4c;">${title}</td></tr>` +
+    `<tr><td colspan="${n}" style="height:18px;font-size:9.5pt;color:#4A5462;">${subtitle}</td></tr>` +
+    `<tr><td colspan="${n}" style="height:8px;"></td></tr>` +
+    `<tr>${th}</tr>` +
+    tr +
+    `</table>`;
+
+  const html =
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">' +
+    '<head><meta charset="utf-8" /></head><body>' +
+    table +
+    '</body></html>';
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  downloadBlob(blob, `${slugify(title)}.xls`);
 }

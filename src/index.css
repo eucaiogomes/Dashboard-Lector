@@ -58,6 +58,28 @@
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  /* Ver Detalhes report overlay: print it as plain page content — no dark backdrop,
+     no viewport clipping — instead of a floating modal. */
+  .report-detail-backdrop {
+    position: static !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+  #report-detail-print-root {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  .report-detail-table-scroll {
+    overflow: visible !important;
+  }
 }
 
 .print-only {
@@ -83,17 +105,17 @@
   transition: none;
   z-index: 30;
   cursor: grabbing;
-  box-shadow: 0 12px 28px -6px rgba(24, 58, 117, 0.35);
+  box-shadow: 0 12px 28px -6px rgba(0, 78, 76, 0.35);
 }
 
 .dash-grid .react-grid-item.resizing {
   transition: none;
   z-index: 20;
-  box-shadow: 0 8px 22px -6px rgba(24, 58, 117, 0.28);
+  box-shadow: 0 8px 22px -6px rgba(0, 78, 76, 0.28);
 }
 
 .dash-grid .react-grid-placeholder {
-  background: rgba(24, 58, 117, 0.07);
+  background: rgba(0, 78, 76, 0.07);
   border-radius: 6px;
   z-index: 1;
 }
@@ -118,7 +140,7 @@
 .dash-grid .react-resizable-handle::after {
   content: '';
   position: absolute;
-  background: #183a75;
+  background: #004e4c;
   opacity: 0;
   transition: opacity 120ms ease;
   border-radius: 2px;

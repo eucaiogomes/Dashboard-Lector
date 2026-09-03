@@ -209,10 +209,10 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
         className={`h-9 px-3.5 bg-white border rounded-full text-xs font-semibold flex items-center gap-2.5 transition-all shadow-2xs hover:border-[#b6bdc7] cursor-pointer ${
-          isOpen ? 'border-[#eb6200] ring-2 ring-[#eb6200]/20' : 'border-[#dfe4ea]'
+          isOpen ? 'border-[#f47920] ring-2 ring-[#f47920]/20' : 'border-[#dfe4ea]'
         }`}
       >
-        <span className="text-[#183a75] font-bold text-[13px]">
+        <span className="text-[#004e4c] font-bold text-[13px]">
           {value.displayText || 'Agosto - 2026'}
         </span>
         <div className="w-px h-4 bg-[#dfe4ea]"></div>
@@ -234,12 +234,12 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                 className="flex items-center gap-2 cursor-pointer group"
               >
                 <span className={`text-[12.5px] font-bold tracking-wider ${
-                  tempMode === 'mensal' ? 'text-[#183a75]' : 'text-[#8a93a0] group-hover:text-[#183a75]'
+                  tempMode === 'mensal' ? 'text-[#004e4c]' : 'text-[#8a93a0] group-hover:text-[#004e4c]'
                 }`}>
                   MENSAL
                 </span>
                 <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                  tempMode === 'mensal' ? 'bg-[#20b2aa]' : 'bg-[#e2e8f0]'
+                  tempMode === 'mensal' ? 'bg-[#00995d]' : 'bg-[#e2e8f0]'
                 }`}>
                   {tempMode === 'mensal' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                 </div>
@@ -251,12 +251,12 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                 className="flex items-center gap-2 cursor-pointer group"
               >
                 <span className={`text-[12.5px] font-bold tracking-wider ${
-                  tempMode === 'periodo' ? 'text-[#183a75]' : 'text-[#8a93a0] group-hover:text-[#183a75]'
+                  tempMode === 'periodo' ? 'text-[#004e4c]' : 'text-[#8a93a0] group-hover:text-[#004e4c]'
                 }`}>
                   PERÍODO
                 </span>
                 <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                  tempMode === 'periodo' ? 'bg-[#20b2aa]' : 'bg-[#e2e8f0]'
+                  tempMode === 'periodo' ? 'bg-[#00995d]' : 'bg-[#e2e8f0]'
                 }`}>
                   {tempMode === 'periodo' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                 </div>
@@ -278,7 +278,7 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                         className={`text-xs py-1 px-2.5 rounded-full text-center transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-[#cbd5e1] text-[#1e293b] font-bold shadow-2xs'
-                            : 'text-[#64748b] hover:text-[#183a75] hover:bg-[#f8fafc] font-medium'
+                            : 'text-[#64748b] hover:text-[#004e4c] hover:bg-[#f8fafc] font-medium'
                         }`}
                       >
                         {y}
@@ -298,12 +298,12 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                         onClick={() => setTempMonth(idx)}
                         className={`text-xs py-1 px-2.5 rounded-md text-left transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? 'text-[#183a75] font-bold bg-[#eef0f3]'
-                            : 'text-[#475569] hover:text-[#183a75] hover:bg-[#f8fafc]'
+                            ? 'text-[#004e4c] font-bold bg-[#eef0f3]'
+                            : 'text-[#475569] hover:text-[#004e4c] hover:bg-[#f8fafc]'
                         }`}
                       >
                         <span>{m}</span>
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#eb6200]"></span>}
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#f47920]"></span>}
                       </button>
                     );
                   })}
@@ -327,7 +327,7 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                     }}
                     className={`flex items-center justify-between h-9 px-3 bg-white border rounded-[8px] cursor-pointer transition-all ${
                       calendarTarget === 'start'
-                        ? 'border-[#eb6200] ring-1 ring-[#eb6200]'
+                        ? 'border-[#f47920] ring-1 ring-[#f47920]'
                         : 'border-[#dfe4ea] hover:border-[#b6bdc7]'
                     }`}
                   >
@@ -354,7 +354,7 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                     }}
                     className={`flex items-center justify-between h-9 px-3 bg-white border rounded-[8px] cursor-pointer transition-all ${
                       calendarTarget === 'end'
-                        ? 'border-[#eb6200] ring-1 ring-[#eb6200]'
+                        ? 'border-[#f47920] ring-1 ring-[#f47920]'
                         : 'border-[#dfe4ea] hover:border-[#b6bdc7]'
                     }`}
                   >
@@ -376,17 +376,17 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                       <button
                         type="button"
                         onClick={prevCalMonth}
-                        className="p-1 text-[#64748b] hover:text-[#183a75] cursor-pointer rounded hover:bg-[#f1f5f9]"
+                        className="p-1 text-[#64748b] hover:text-[#004e4c] cursor-pointer rounded hover:bg-[#f1f5f9]"
                       >
                         <ChevronLeft className="w-3.5 h-3.5" />
                       </button>
-                      <div className="text-xs font-bold text-[#183a75]">
+                      <div className="text-xs font-bold text-[#004e4c]">
                         {MONTHS[calMonth]} {calYear}
                       </div>
                       <button
                         type="button"
                         onClick={nextCalMonth}
-                        className="p-1 text-[#64748b] hover:text-[#183a75] cursor-pointer rounded hover:bg-[#f1f5f9]"
+                        className="p-1 text-[#64748b] hover:text-[#004e4c] cursor-pointer rounded hover:bg-[#f1f5f9]"
                       >
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
@@ -413,7 +413,7 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
                             onClick={() => handleSelectCalDate(d.dateIso)}
                             className={`h-6 w-6 mx-auto flex items-center justify-center text-[11px] rounded-[3px] transition-colors cursor-pointer ${
                               isSelected
-                                ? 'bg-[#eb6200] text-white font-bold'
+                                ? 'bg-[#00995d] text-white font-bold'
                                 : d.isCurrentMonth
                                 ? 'text-[#1f2733] hover:bg-[#e2e8f0]'
                                 : 'text-[#cbd5e1] hover:bg-[#f8fafc]'
@@ -433,7 +433,7 @@ export const DateFilterPicker: React.FC<DateFilterPickerProps> = ({ value, onCha
             <button
               type="button"
               onClick={handleApply}
-              className="w-full mt-2 h-10 bg-[#eb6200] hover:bg-[#d55800] text-white font-semibold text-xs rounded-full flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-[0.99]"
+              className="w-full mt-2 h-10 bg-[#00995d] hover:bg-[#00824f] text-white font-semibold text-xs rounded-full flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-[0.99]"
             >
               <CalendarCheck className="w-4 h-4" />
               <span>Aplicar filtros</span>

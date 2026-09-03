@@ -21,7 +21,7 @@ export const KpiSection: React.FC<KpiSectionProps> = ({ kpis }) => {
             {kpi.label}
           </div>
           <div className="flex items-baseline gap-1.5">
-            <div className="text-[30px] font-bold text-[#183a75] tracking-tight leading-none">
+            <div className="text-[30px] font-bold text-[#004e4c] tracking-tight leading-none">
               {kpi.value}
             </div>
             {kpi.unit && (

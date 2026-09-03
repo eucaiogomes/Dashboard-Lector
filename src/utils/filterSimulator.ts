@@ -243,8 +243,8 @@ export function getSimulatedData(
   }
 
   // 7. Dynamic KPIs calculation for the active view
-  const navy = '#183a75';
-  const accent = '#eb6200';
+  const navy = '#004e4c';
+  const accent = '#f47920';
   const danger = '#a32020';
 
   let kpis: KPIItem[] = [];

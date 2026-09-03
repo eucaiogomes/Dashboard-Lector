@@ -137,15 +137,15 @@ export default function App() {
   return (
     <div className="min-h-screen min-w-[1024px] bg-[#f4f6f9] text-[#1f2733] flex flex-col font-['Barlow'] antialiased">
       {/* 1. Print Only Header */}
-      <div className="print-only hidden items-end justify-between gap-5 px-7 pb-3 border-b-2 border-[#183a75] mb-3.5 pt-1">
+      <div className="print-only hidden items-end justify-between gap-5 px-7 pb-3 border-b-2 border-[#004e4c] mb-3.5 pt-1">
         <div>
           <div className="flex items-center gap-2.5">
             <img src="/logo-lector.svg" alt="Lector" className="h-5 w-auto object-contain" />
-            <div className="text-[13px] font-bold text-[#183a75] tracking-wider uppercase">
+            <div className="text-[13px] font-bold text-[#004e4c] tracking-wider uppercase">
               Unimed Volta Redonda
             </div>
           </div>
-          <div className="mt-1.5 text-[19px] font-bold text-[#183a75]">
+          <div className="mt-1.5 text-[19px] font-bold text-[#004e4c]">
             Indicadores T&amp;D — {view}
           </div>
           <div className="mt-0.5 text-[11px] text-[#6b7684]">

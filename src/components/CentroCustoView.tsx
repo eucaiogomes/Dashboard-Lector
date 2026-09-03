@@ -36,7 +36,7 @@ export const CentroCustoView: React.FC<CentroCustoViewProps> = ({ rowsData }) =>
         {/* Table Title and Switcher */}
         <div className="px-5 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-[15.5px] font-bold text-[#183a75]">
+            <div className="text-[15.5px] font-bold text-[#004e4c]">
               Indicadores por centro de custo
             </div>
             <div className="text-[12.5px] text-[#8a93a0] mt-0.5 font-medium">
@@ -55,8 +55,8 @@ export const CentroCustoView: React.FC<CentroCustoViewProps> = ({ rowsData }) =>
                   onClick={() => setCcTab(tab)}
                   className={`h-[30px] px-3.5 text-[12.5px] font-semibold rounded-[4px] cursor-pointer transition-all border ${
                     isActive
-                      ? 'bg-[#183a75] text-white border-[#183a75]'
-                      : 'bg-white text-[#4a5462] border-[#dfe4ea] hover:border-[#183a75]'
+                      ? 'bg-[#004e4c] text-white border-[#004e4c]'
+                      : 'bg-white text-[#4a5462] border-[#dfe4ea] hover:border-[#004e4c]'
                   }`}
                 >
                   {tab}
@@ -160,7 +160,7 @@ export const CentroCustoView: React.FC<CentroCustoViewProps> = ({ rowsData }) =>
           <div className="flex gap-1.5 items-center">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              className="px-2.5 py-1 border border-[#dfe4ea] hover:border-[#183a75] rounded-[3px] bg-white cursor-pointer transition-colors"
+              className="px-2.5 py-1 border border-[#dfe4ea] hover:border-[#004e4c] rounded-[3px] bg-white cursor-pointer transition-colors"
             >
               ‹
             </button>
@@ -170,8 +170,8 @@ export const CentroCustoView: React.FC<CentroCustoViewProps> = ({ rowsData }) =>
                 onClick={() => setCurrentPage(page)}
                 className={`px-2.5 py-1 rounded-[3px] font-semibold cursor-pointer transition-colors ${
                   currentPage === page
-                    ? 'border border-[#183a75] bg-[#183a75] text-white'
-                    : 'border border-[#dfe4ea] bg-white text-[#4a5462] hover:border-[#183a75]'
+                    ? 'border border-[#004e4c] bg-[#004e4c] text-white'
+                    : 'border border-[#dfe4ea] bg-white text-[#4a5462] hover:border-[#004e4c]'
                 }`}
               >
                 {page}
@@ -179,7 +179,7 @@ export const CentroCustoView: React.FC<CentroCustoViewProps> = ({ rowsData }) =>
             ))}
             <button
               onClick={() => setCurrentPage(Math.min(3, currentPage + 1))}
-              className="px-2.5 py-1 border border-[#dfe4ea] hover:border-[#183a75] rounded-[3px] bg-white cursor-pointer transition-colors"
+              className="px-2.5 py-1 border border-[#dfe4ea] hover:border-[#004e4c] rounded-[3px] bg-white cursor-pointer transition-colors"
             >
               ›
             </button>

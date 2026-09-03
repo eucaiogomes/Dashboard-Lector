@@ -38,8 +38,8 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
                 onClick={() => setInstTab(tab)}
                 className={`h-[42px] px-4.5 border-none text-[13px] font-semibold cursor-pointer transition-all border-b-2 ${
                   isActive
-                    ? 'bg-white text-[#183a75] border-[#eb6200]'
-                    : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#183a75]'
+                    ? 'bg-white text-[#004e4c] border-[#f47920]'
+                    : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#004e4c]'
                 }`}
               >
                 {tab}
@@ -49,7 +49,7 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
         </div>
 
         <div className="p-5 pb-3.5">
-          <div className="text-[15px] font-bold text-[#183a75]">
+          <div className="text-[15px] font-bold text-[#004e4c]">
             {chartTitle}
           </div>
 
@@ -63,11 +63,11 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
                     key={i}
                     className="h-full flex flex-col justify-end items-center gap-1.5 group"
                   >
-                    <div className="text-[11.5px] font-bold text-[#183a75] transition-transform group-hover:scale-110">
+                    <div className="text-[11.5px] font-bold text-[#004e4c] transition-transform group-hover:scale-110">
                       {m.realizado}
                     </div>
                     <div
-                      className="w-full max-w-[40px] bg-[#183a75] rounded-t-[3px] transition-all hover:bg-[#234d94]"
+                      className="w-full max-w-[40px] bg-[#004e4c] rounded-t-[3px] transition-all hover:bg-[#00706c]"
                       style={{ height: `${heightPct}%` }}
                       title={`${m.mesAno}: ${m.realizado} realizados`}
                     ></div>
@@ -89,12 +89,12 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
                     className="h-full flex gap-1 items-end justify-center group"
                   >
                     <div
-                      className="w-[13px] bg-[#cdd6e6] rounded-t-[2px] transition-all group-hover:opacity-90"
+                      className="w-[13px] bg-[#cde3bb] rounded-t-[2px] transition-all group-hover:opacity-90"
                       style={{ height: `${hPrev}%` }}
                       title={`${m.mesAno} - Previsto: ${m.previsto}`}
                     ></div>
                     <div
-                      className="w-[13px] bg-[#183a75] rounded-t-[2px] transition-all group-hover:bg-[#234d94]"
+                      className="w-[13px] bg-[#004e4c] rounded-t-[2px] transition-all group-hover:bg-[#00706c]"
                       style={{ height: `${hReal}%` }}
                       title={`${m.mesAno} - Realizado: ${m.realizado}`}
                     ></div>
@@ -121,11 +121,11 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
                     </div>
                     <div className="h-[9px] bg-[#eef0f3] rounded-full relative overflow-hidden">
                       <div
-                        className="absolute inset-y-0 left-0 bg-[#cdd6e6] rounded-full"
+                        className="absolute inset-y-0 left-0 bg-[#cde3bb] rounded-full"
                         style={{ width: `${wPrev}%` }}
                       ></div>
                       <div
-                        className="absolute inset-y-0 left-0 bg-[#eb6200] rounded-full transition-all"
+                        className="absolute inset-y-0 left-0 bg-[#004e4c] rounded-full transition-all"
                         style={{ width: `${wReal}%` }}
                       ></div>
                     </div>
@@ -153,11 +153,11 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
           {/* Legend */}
           <div className="mt-2.5 flex items-center gap-4 text-[12.5px] text-[#4a5462]">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#cdd6e6] rounded-[2px]"></span>
+              <span className="w-2.5 h-2.5 bg-[#cde3bb] rounded-[2px]"></span>
               Previsto
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#183a75] rounded-[2px]"></span>
+              <span className="w-2.5 h-2.5 bg-[#004e4c] rounded-[2px]"></span>
               Realizado
             </span>
             <span className="flex-1"></span>
@@ -170,19 +170,19 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
       <div className="flex flex-col gap-3.5">
         {/* Right Top Card: Evolução — Percentual de Realização */}
         <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-4 px-5 pb-3.5 shadow-2xs">
-          <div className="text-[15px] font-bold text-[#183a75]">
+          <div className="text-[15px] font-bold text-[#004e4c]">
             Evolução — Percentual de Realização
           </div>
           <div className="mt-3.5 grid grid-cols-12 gap-1.5 items-end h-[150px]">
             {baseData.map((m, i) => {
               const pct = Math.round((m.realizado / m.previsto) * 100);
-              const barBg = pct >= 100 ? '#183a75' : pct >= 50 ? '#3f66a8' : '#9fb0cd';
+              const barBg = pct >= 100 ? '#004e4c' : pct >= 50 ? '#1f8f78' : '#a9d68f';
               return (
                 <div
                   key={i}
                   className="h-full flex flex-col justify-end items-center gap-1 group"
                 >
-                  <div className="text-[10.5px] font-bold text-[#eb6200] leading-tight">
+                  <div className="text-[10.5px] font-bold text-[#004e4c] leading-tight">
                     {pct}%
                   </div>
                   <div
@@ -205,7 +205,7 @@ export const InstitucionaisView: React.FC<InstitucionaisViewProps> = ({
 
         {/* Right Bottom Card: Agenda */}
         <div className="bg-white border border-[#e4e8ee] rounded-[6px] pt-4 shadow-2xs overflow-hidden">
-          <div className="px-5 text-[15px] font-bold text-[#183a75]">
+          <div className="px-5 text-[15px] font-bold text-[#004e4c]">
             Agenda
           </div>
           <div className="mt-3 grid grid-cols-[78px_1fr_135px_116px] bg-[#f6f8fa] border-y border-[#e4e8ee] px-5 py-2">

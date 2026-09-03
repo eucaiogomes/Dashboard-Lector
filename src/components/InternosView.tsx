@@ -58,7 +58,7 @@ export const InternosView: React.FC<InternosViewProps> = ({
       {/* 1. Left Card: Evolution by Metric */}
       <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-4 px-5 pb-3.5 shadow-2xs">
         <div className="flex flex-wrap items-start justify-between gap-2.5">
-          <div className="text-[15px] font-bold text-[#183a75]">
+          <div className="text-[15px] font-bold text-[#004e4c]">
             Evolução
           </div>
           <div className="flex flex-wrap gap-1.5 justify-end">
@@ -70,8 +70,8 @@ export const InternosView: React.FC<InternosViewProps> = ({
                   onClick={() => setMetrica(m)}
                   className={`h-[26px] px-2.5 text-[11.5px] font-semibold rounded-[3px] cursor-pointer transition-all border ${
                     isActive
-                      ? 'bg-[#183a75] text-white border-[#183a75]'
-                      : 'bg-white text-[#4a5462] border-[#dfe4ea] hover:border-[#183a75]'
+                      ? 'bg-[#004e4c] text-white border-[#004e4c]'
+                      : 'bg-white text-[#4a5462] border-[#dfe4ea] hover:border-[#004e4c]'
                   }`}
                 >
                   {m}
@@ -99,11 +99,11 @@ export const InternosView: React.FC<InternosViewProps> = ({
                 key={i}
                 className="h-full flex flex-col justify-end items-center gap-1 group"
               >
-                <div className="text-[10.5px] font-bold text-[#183a75] leading-tight group-hover:scale-105 transition-transform">
+                <div className="text-[10.5px] font-bold text-[#004e4c] leading-tight group-hover:scale-105 transition-transform">
                   {labelStr}
                 </div>
                 <div
-                  className="w-full max-w-[34px] bg-[#183a75] rounded-t-[3px] transition-all group-hover:bg-[#234d94]"
+                  className="w-full max-w-[34px] bg-[#004e4c] rounded-t-[3px] transition-all group-hover:bg-[#00706c]"
                   style={{ height: `${heightPct}%` }}
                   title={`${m.mesAno}: ${val.toLocaleString('pt-BR')}`}
                 ></div>
@@ -134,8 +134,8 @@ export const InternosView: React.FC<InternosViewProps> = ({
                   onClick={() => setAtivosTab(tab)}
                   className={`h-10 px-4 border-none text-[13px] font-semibold cursor-pointer transition-all border-b-2 ${
                     isActive
-                      ? 'bg-white text-[#183a75] border-[#eb6200]'
-                      : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#183a75]'
+                      ? 'bg-white text-[#004e4c] border-[#f47920]'
+                      : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#004e4c]'
                   }`}
                 >
                   {tab}
@@ -162,16 +162,16 @@ export const InternosView: React.FC<InternosViewProps> = ({
                     key={i}
                     className="h-full flex flex-col justify-end items-center gap-1 group"
                   >
-                    <div className="text-[11.5px] font-bold text-[#eb6200]">
+                    <div className="text-[11.5px] font-bold text-[#004e4c]">
                       {porAdesao ? `${pct}%` : String(s.colabTreinados)}
                     </div>
                     <div
-                      className="w-full max-w-[52px] bg-[#cdd6e6] rounded-t-[3px] relative"
+                      className="w-full max-w-[52px] bg-[#cde3bb] rounded-t-[3px] relative"
                       style={{ height: `${hAtivos}%` }}
                       title={`${s.mesAno} - Ativos: ${s.ativos}`}
                     >
                       <div
-                        className="absolute inset-x-0 bottom-0 bg-[#183a75] rounded-t-[3px] transition-all group-hover:bg-[#234d94]"
+                        className="absolute inset-x-0 bottom-0 bg-[#004e4c] rounded-t-[3px] transition-all group-hover:bg-[#00706c]"
                         style={{ height: `${hTreinados}%` }}
                         title={`${s.mesAno} - Treinados: ${s.colabTreinados} (${pct}%)`}
                       ></div>
@@ -184,11 +184,11 @@ export const InternosView: React.FC<InternosViewProps> = ({
 
             <div className="mt-2.5 flex items-center gap-4 text-xs text-[#4a5462]">
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 bg-[#cdd6e6] rounded-[2px]"></span>
+                <span className="w-2.5 h-2.5 bg-[#cde3bb] rounded-[2px]"></span>
                 Ativos
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 bg-[#183a75] rounded-[2px]"></span>
+                <span className="w-2.5 h-2.5 bg-[#004e4c] rounded-[2px]"></span>
                 Treinados
               </span>
             </div>
@@ -197,7 +197,7 @@ export const InternosView: React.FC<InternosViewProps> = ({
 
         {/* Treinamentos Ranking Card */}
         <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-4 px-4.5 pb-3.5 shadow-2xs">
-          <div className="text-[15px] font-bold text-[#183a75]">
+          <div className="text-[15px] font-bold text-[#004e4c]">
             Treinamentos
           </div>
           <div className="text-[12.5px] text-[#8a93a0] mt-0.5 font-medium">
@@ -220,7 +220,7 @@ export const InternosView: React.FC<InternosViewProps> = ({
                   </div>
                   <div className="h-4 bg-[#f4f6f9] rounded-[3px] overflow-hidden">
                     <div
-                      className="h-4 bg-[#183a75] rounded-[3px] transition-all hover:bg-[#234d94]"
+                      className="h-4 bg-[#004e4c] rounded-[3px] transition-all hover:bg-[#00706c]"
                       style={{ width: `${widthPct}%` }}
                     ></div>
                   </div>
@@ -245,8 +245,8 @@ export const InternosView: React.FC<InternosViewProps> = ({
                 onClick={() => setRankTab(tab)}
                 className={`h-10 px-4 border-none text-[13px] font-semibold cursor-pointer transition-all border-b-2 ${
                   isActive
-                    ? 'bg-white text-[#183a75] border-[#eb6200]'
-                    : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#183a75]'
+                    ? 'bg-white text-[#004e4c] border-[#f47920]'
+                    : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#004e4c]'
                 }`}
               >
                 {tab}
@@ -284,11 +284,11 @@ export const InternosView: React.FC<InternosViewProps> = ({
                   </div>
                   <div className="h-[17px] bg-[#f4f6f9] rounded-[3px] relative overflow-hidden">
                     <div
-                      className="absolute inset-y-0 left-0 bg-[#dbe2ee] rounded-[3px]"
+                      className="absolute inset-y-0 left-0 bg-[#cde3bb] rounded-[3px]"
                       style={{ width: wBase }}
                     ></div>
                     <div
-                      className="absolute inset-y-0 left-0 bg-[#183a75] rounded-[3px] transition-all"
+                      className="absolute inset-y-0 left-0 bg-[#004e4c] rounded-[3px] transition-all"
                       style={{ width: wFore }}
                     ></div>
                   </div>
