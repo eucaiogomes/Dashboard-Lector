@@ -102,7 +102,8 @@ export const SPECIAL_WIDGET_IDS = {
   internosTreinamentosHoras: 'internos_treinamentos_horas',
   internosRankingCargo: 'internos_ranking_cargo',
   centroCustoTabela: 'centro_custo_tabela',
-  turmasExecucao: 'turmas_execucao_periodo'
+  turmasExecucao: 'turmas_execucao_periodo',
+  educacaoPermanente: 'educacao_permanente'
 } as const;
 
 /** Stub generateData shared by every special widget — their real data/rendering lives in
@@ -229,6 +230,19 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     description: 'Gráfico de rosca com o percentual de realização em destaque e a distribuição das turmas previstas entre Realizado, Agendado e Não Realizado.',
     defaultType: 'Pizza',
     allowedTypes: ['Pizza'],
+    generateData: specialWidgetStub
+  },
+
+  // Relatório de Educação Permanente — snapshot por setor (colaboradores, adesão, turmas, esforço extra)
+  {
+    id: SPECIAL_WIDGET_IDS.educacaoPermanente,
+    title: 'Relatório de Educação Permanente (por setor)',
+    subtitle: 'Colaboradores, adesão, turmas e esforço extra com filtro de Setor',
+    group: 'ted_indicadores',
+    icon: 'icon-certificate',
+    description: 'Relatório em formato de ficha: elegíveis x treinados, adesão mensal x meta, turmas planejadas x executadas e esforço extra, por setor e supervisor.',
+    defaultType: 'Tabela',
+    allowedTypes: ['Tabela'],
     generateData: specialWidgetStub
   },
 

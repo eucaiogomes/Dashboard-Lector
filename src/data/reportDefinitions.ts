@@ -2,6 +2,7 @@ import { SPECIAL_WIDGET_IDS } from './dashboardCatalog';
 import { monthlyBaseData, agendaData, internalTrainingsData, jobPositionsData, costCenterRowsData } from './mockData';
 import { trainingCatalogData } from './trainingCatalogData';
 import { turmasExecucaoData } from './turmasExecucaoData';
+import { educacaoPermanenteData } from './educacaoPermanenteData';
 
 export interface ReportColumn {
   key: string;
@@ -175,6 +176,39 @@ export const REPORT_DEFINITIONS: Record<string, ReportDefinition> = {
       agendado: t.agendado,
       naoRealizado: t.naoRealizado,
       percentual: pct(t.realizado, t.previsto)
+    }))
+  },
+
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: {
+    title: 'Relatório de Educação Permanente',
+    subtitle: 'Relatório completo por setor: colaboradores, adesão, turmas e esforço extra',
+    columns: [
+      { key: 'setor', label: 'Setor', type: 'text' },
+      { key: 'supervisores', label: 'Supervisor', type: 'text' },
+      { key: 'periodo', label: 'Período', type: 'text' },
+      { key: 'tema', label: 'Tema', type: 'text' },
+      { key: 'instrutores', label: 'Instrutores', type: 'text' },
+      { key: 'elegiveis', label: 'Elegíveis', align: 'right', type: 'number' },
+      { key: 'treinados', label: 'Treinados', align: 'right', type: 'number' },
+      { key: 'adesao', label: '% Adesão', align: 'right', type: 'number' },
+      { key: 'meta', label: '% Meta', align: 'right', type: 'number' },
+      { key: 'planejadas', label: 'Turmas Planej.', align: 'right', type: 'number' },
+      { key: 'executadas', label: 'Turmas Exec.', align: 'right', type: 'number' },
+      { key: 'esforcoExtra', label: '% Esforço Extra', align: 'right', type: 'number' }
+    ],
+    rows: educacaoPermanenteData.map(r => ({
+      setor: r.setor,
+      supervisores: r.supervisores,
+      periodo: r.periodo,
+      tema: r.tema,
+      instrutores: r.instrutores,
+      elegiveis: r.colaboradoresElegiveis,
+      treinados: r.colaboradoresTreinados,
+      adesao: r.adesaoMensalPct,
+      meta: r.adesaoMetaPct,
+      planejadas: r.turmasPlanejadas,
+      executadas: r.turmasExecutadas,
+      esforcoExtra: r.esforcoExtraPct
     }))
   }
 };

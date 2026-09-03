@@ -19,6 +19,7 @@ import { TreinamentosRankingBlock } from './TreinamentosRankingBlock';
 import { RankingCargoBlock } from './RankingCargoBlock';
 import { CentroCustoTableBlock } from './CentroCustoTableBlock';
 import { TurmasExecucaoDonutBlock } from './TurmasExecucaoDonutBlock';
+import { EducacaoPermanenteBlock } from './EducacaoPermanenteBlock';
 import { AddChartModal } from './AddChartModal';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ReportDetailOverlay } from './ReportDetailOverlay';
@@ -52,7 +53,8 @@ const SPECIAL_WIDGETS: Record<string, React.FC<SpecialWidgetProps>> = {
   [SPECIAL_WIDGET_IDS.internosTreinamentosHoras]: TreinamentosRankingBlock,
   [SPECIAL_WIDGET_IDS.internosRankingCargo]: RankingCargoBlock,
   [SPECIAL_WIDGET_IDS.centroCustoTabela]: CentroCustoTableBlock,
-  [SPECIAL_WIDGET_IDS.turmasExecucao]: TurmasExecucaoDonutBlock
+  [SPECIAL_WIDGET_IDS.turmasExecucao]: TurmasExecucaoDonutBlock,
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock
 };
 
 /** Default cards shown when the Dashboard loads, with fixed positions/sizes mirroring how
@@ -77,7 +79,10 @@ const DEFAULT_LAYOUT_SPEC: { catalogId: string; x: number; y: number; w: number;
   { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 24, w: 4, h: 16 },
 
   // Centro de Custo — full-width table at the bottom.
-  { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 40, w: 12, h: 8 }
+  { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 40, w: 12, h: 8 },
+
+  // Educação Permanente — ficha por setor, abaixo de tudo.
+  { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 48, w: 6, h: 10 }
 ];
 
 /** Builds the default cards + their grid layout together from DEFAULT_LAYOUT_SPEC, so each
