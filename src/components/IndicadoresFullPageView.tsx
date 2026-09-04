@@ -118,8 +118,36 @@ export const IndicadoresFullPageView: React.FC<IndicadoresFullPageViewProps> = (
     }, 300);
   };
 
+  const activeFilters = getActiveFilters();
+  const printFiltersStr = [`Período: ${dateFilter.displayText}`, ...activeFilters.map(f => `${f.label}: ${f.value}`)].join('  ·  ');
+  const printAfastadosStr = AFASTADOS
+    ? 'Afastados (status bloqueado) incluídos na base de ativos'
+    : 'Afastados excluídos da base de ativos';
+  const printEmittedAt = new Date().toLocaleDateString('pt-BR');
+
   return (
     <div>
+      {/* Print-only masthead — this is the actual "PDF" a viewer sees, since the interactive
+          chrome (ViewHeader/FilterBar/toolbar) is hidden on print via .no-print. */}
+      <div className="print-only hidden items-end justify-between gap-5 px-7 pb-3 border-b-2 border-[#004e4c] mb-3.5 pt-1">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo-lector.svg" alt="Lector" className="h-5 w-auto object-contain" />
+            <div className="text-[13px] font-bold text-[#004e4c] tracking-wider uppercase">
+              Unimed Volta Redonda
+            </div>
+          </div>
+          <div className="mt-1.5 text-[19px] font-bold text-[#004e4c]">
+            Indicadores T&amp;D — {view}
+          </div>
+          <div className="mt-0.5 text-[11px] text-[#6b7684]">{printFiltersStr}</div>
+        </div>
+        <div className="text-right text-[11px] text-[#6b7684]">
+          <div>{printAfastadosStr}</div>
+          <div>Emitido em {printEmittedAt}</div>
+        </div>
+      </div>
+
       <ViewHeader
         view={view}
         onViewChange={setView}
@@ -158,6 +186,12 @@ export const IndicadoresFullPageView: React.FC<IndicadoresFullPageViewProps> = (
       )}
 
       {view === 'Por Centro de Custo' && <CentroCustoView rowsData={simulatedData.costCenterRowsData} />}
+
+      <div className="print-only hidden items-center justify-between px-7 pt-2 mt-3.5 border-t border-[#dfe4ea] text-[10px] text-[#8a93a0]">
+        <span>Lector Live · Indicadores T&amp;D — Unimed Volta Redonda</span>
+        <span>{printAfastadosStr}</span>
+        <span>Emitido em {printEmittedAt}</span>
+      </div>
     </div>
   );
 };

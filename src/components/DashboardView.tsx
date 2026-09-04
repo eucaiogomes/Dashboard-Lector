@@ -604,8 +604,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         isFullscreen ? 'fixed inset-0 z-50 bg-[#f4f6f9] p-8 overflow-y-auto' : ''
       }`}
     >
-      {/* Everything below is the interactive Dashboard chrome — hidden when printing so only
-          the "Ver Detalhes" report overlay (rendered outside this wrapper) shows up on paper. */}
+      {/* Dashboard chrome (header, panel tabs, toolbar) — hidden when printing. A template
+          panel's IndicadoresFullPageView renders further down, outside any no-print wrapper,
+          so it — not this chrome — is what actually prints/exports to PDF. */}
       <div className="no-print">
       {/* Top Header & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -719,13 +720,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           </button>
         </div>
       </div>
-
-      {/* Template panel ("Treinamentos Institucionais" / "Internos" / "Por Centro de Custo")
-          — an exact replica of its Indicadores T&D screen, rendered above the panel's own
-          chart grid so extra charts can still be added below it. */}
+      </div>
+      {/* IndicadoresFullPageView renders OUTSIDE the no-print wrapper above: it's its own
+          printable report (own print-only masthead, .no-print on just its interactive chrome),
+          so "Gerar PDF" from inside a panel actually prints the report instead of a blank page —
+          everything under the Dashboard's own .no-print wrapper is hidden on print. */}
       {activePanel.templateId && (
         <IndicadoresFullPageView key={activePanel.id} initialView={activePanel.templateId} />
       )}
+      <div className="no-print">
       {/* Empty State — skipped on template panels, where "no extra charts yet" below a full
           report reads as a stray error message rather than a real empty dashboard. */}
       {cards.length === 0 ? (
@@ -820,7 +823,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       />
       </div>
 
-      {/* Ver Detalhes report overlay — the only thing meant to print */}
+      {/* Ver Detalhes report overlay — also prints on its own, same pattern as
+          IndicadoresFullPageView above (own .no-print chrome, otherwise printable). */}
       <ReportDetailOverlay
         definition={detailsReportCatalogId ? REPORT_DEFINITIONS[detailsReportCatalogId] ?? null : null}
         onClose={() => setDetailsReportCatalogId(null)}
