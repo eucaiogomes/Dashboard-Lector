@@ -15,7 +15,6 @@ interface DetailedIndicadoresModalProps {
   isOpen: boolean;
   onClose: () => void;
   card: DashboardCardItem | null;
-  onGoToIndicadores?: (viewType?: ViewType) => void;
   onUpdateCardType?: (cardId: string, newType: SupportedChartType) => void;
   onUpdateCardCategory?: (cardId: string, newCategory: string) => void;
 }
@@ -24,7 +23,6 @@ export const DetailedIndicadoresModal: React.FC<DetailedIndicadoresModalProps> =
   isOpen,
   onClose,
   card,
-  onGoToIndicadores,
   onUpdateCardType,
   onUpdateCardCategory
 }) => {

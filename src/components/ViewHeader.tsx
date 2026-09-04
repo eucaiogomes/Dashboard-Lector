@@ -8,6 +8,8 @@ interface ViewHeaderProps {
   onExportExcel: () => void;
   onExportPdf: () => void;
   exportStatus?: string;
+  showBreadcrumb?: boolean;
+  showTabs?: boolean;
 }
 
 export const ViewHeader: React.FC<ViewHeaderProps> = ({
@@ -15,7 +17,9 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
   onViewChange,
   onExportExcel,
   onExportPdf,
-  exportStatus
+  exportStatus,
+  showBreadcrumb = true,
+  showTabs = true
 }) => {
   const views: ViewType[] = [
     'Treinamentos Institucionais',
@@ -37,13 +41,15 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
       {/* Top Breadcrumb & Action row */}
       <div className="pt-[22px] px-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[12.5px] text-[#6b7684] flex items-center gap-1.5 font-medium">
-            <span>Minha Área</span>
-            <span className="text-[#b6bdc7]">/</span>
-            <span>Indicadores T&amp;D</span>
-            <span className="text-[#b6bdc7]">/</span>
-            <span className="text-[#f47920] font-semibold">{view}</span>
-          </div>
+          {showBreadcrumb && (
+            <div className="text-[12.5px] text-[#6b7684] flex items-center gap-1.5 font-medium">
+              <span>Minha Área</span>
+              <span className="text-[#b6bdc7]">/</span>
+              <span>Indicadores T&amp;D</span>
+              <span className="text-[#b6bdc7]">/</span>
+              <span className="text-[#f47920] font-semibold">{view}</span>
+            </div>
+          )}
           <h1 className="mt-1.5 text-[26px] font-bold text-[#004e4c] tracking-tight">
             {view}
           </h1>
@@ -77,24 +83,26 @@ export const ViewHeader: React.FC<ViewHeaderProps> = ({
       </div>
 
       {/* Tabs Row */}
-      <div className="pt-4 px-7 flex gap-1 border-b border-[#dfe4ea]">
-        {views.map(v => {
-          const isActive = view === v;
-          return (
-            <button
-              key={v}
-              onClick={() => onViewChange(v)}
-              className={`h-[38px] px-4.5 border-none bg-transparent text-[13.5px] font-semibold cursor-pointer transition-all ${
-                isActive
-                  ? 'text-[#004e4c] border-b-[3px] border-[#f47920] font-bold'
-                  : 'text-[#6b7684] hover:text-[#004e4c] border-b-[3px] border-transparent'
-              }`}
-            >
-              {v}
-            </button>
-          );
-        })}
-      </div>
+      {showTabs && (
+        <div className="pt-4 px-7 flex gap-1 border-b border-[#dfe4ea]">
+          {views.map(v => {
+            const isActive = view === v;
+            return (
+              <button
+                key={v}
+                onClick={() => onViewChange(v)}
+                className={`h-[38px] px-4.5 border-none bg-transparent text-[13.5px] font-semibold cursor-pointer transition-all ${
+                  isActive
+                    ? 'text-[#004e4c] border-b-[3px] border-[#f47920] font-bold'
+                    : 'text-[#6b7684] hover:text-[#004e4c] border-b-[3px] border-transparent'
+                }`}
+              >
+                {v}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -27,7 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     'Meus Treinamentos',
     'Minhas Trilhas',
     'Minhas Pontuações',
-    'Indicadores T&D',
     'Meus Certificados',
     'Meu Calendário',
     'Meu Cadastro',
@@ -144,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       Ver todos os itens de {group.name}
                     </div>
                     <div
-                      onClick={() => onSelectItem && onSelectItem('Indicadores T&D')}
+                      onClick={() => onSelectItem && onSelectItem('Dashboard')}
                       className="py-1 px-2 text-[#4a5568] hover:text-[#004e4c] hover:bg-white rounded cursor-pointer transition-colors"
                     >
                       Relatórios e Indicadores

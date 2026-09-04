@@ -242,10 +242,9 @@ export function getSimulatedData(
     }];
   }
 
-  // 7. Dynamic KPIs calculation for the active view
+  // 7. Dynamic KPIs calculation for the active view — every card uses the same teal accent
+  // for its top border, matching the brand's primary color instead of mixing in orange/red.
   const navy = '#004e4c';
-  const accent = '#f47920';
-  const danger = '#a32020';
 
   let kpis: KPIItem[] = [];
 
@@ -259,9 +258,9 @@ export function getSimulatedData(
     kpis = [
       { label: 'Total Previsto', value: String(totPrevisto), unit: '', delta: `em ${dateFilter.displayText}`, barColor: navy },
       { label: 'Agendado', value: String(totAgendado), unit: '', delta: 'aguardando execução', barColor: navy },
-      { label: 'Realizado', value: String(totRealizado), unit: '', delta: 'turmas concluídas', barColor: accent },
-      { label: 'Não Realizado', value: String(totNaoRealizado), unit: '', delta: 'canceladas ou pendentes', barColor: danger },
-      { label: 'Percentual de Realização', value: pctRealizacao, unit: '%', delta: 'realizado ÷ previsto', barColor: accent }
+      { label: 'Realizado', value: String(totRealizado), unit: '', delta: 'turmas concluídas', barColor: navy },
+      { label: 'Não Realizado', value: String(totNaoRealizado), unit: '', delta: 'canceladas ou pendentes', barColor: navy },
+      { label: 'Percentual de Realização', value: pctRealizacao, unit: '%', delta: 'realizado ÷ previsto', barColor: navy }
     ];
   } else if (view === 'Treinamentos Internos') {
     const sumTreinamentos = baseMonthlyData.reduce((acc, m) => acc + m.qtdTreinamentos, 0);
@@ -272,8 +271,8 @@ export function getSimulatedData(
     kpis = [
       { label: 'Qtd. Treinamentos Internos', value: sumTreinamentos.toLocaleString('pt-BR'), unit: '', delta: `eventos em ${dateFilter.displayText}`, barColor: navy },
       { label: 'Qtd. Total Participantes', value: sumParticipantes.toLocaleString('pt-BR'), unit: '', delta: 'participações registradas', barColor: navy },
-      { label: 'Qtd. Colab. Treinados', value: sumColab.toLocaleString('pt-BR'), unit: '', delta: 'colaboradores distintos', barColor: accent },
-      { label: 'Horas Treinadas', value: `${sumHoras.toLocaleString('pt-BR')}:00`, unit: 'h', delta: 'somatório de carga horária', barColor: accent }
+      { label: 'Qtd. Colab. Treinados', value: sumColab.toLocaleString('pt-BR'), unit: '', delta: 'colaboradores distintos', barColor: navy },
+      { label: 'Horas Treinadas', value: `${sumHoras.toLocaleString('pt-BR')}:00`, unit: 'h', delta: 'somatório de carga horária', barColor: navy }
     ];
   } else {
     // Centro de Custo
@@ -299,9 +298,9 @@ export function getSimulatedData(
         delta: afastados ? `inclui ${afastadosDiff} afastados` : `${afastadosDiff} afastados fora da base`,
         barColor: navy
       },
-      { label: 'Usuários que realizaram', value: baseRealizadosVal.toLocaleString('pt-BR'), unit: '', delta: `${(baseInscritosVal - baseRealizadosVal).toLocaleString('pt-BR')} sem adesão`, barColor: accent },
-      { label: 'Adesão mensal média', value: taxaAdesao, unit: '%', delta: 'inscritos x realizados', barColor: accent },
-      { label: 'Esforço extra', value: taxaEsforco, unit: '%', delta: `${totExc} turmas excedentes de ${totPlan}`, barColor: danger }
+      { label: 'Usuários que realizaram', value: baseRealizadosVal.toLocaleString('pt-BR'), unit: '', delta: `${(baseInscritosVal - baseRealizadosVal).toLocaleString('pt-BR')} sem adesão`, barColor: navy },
+      { label: 'Adesão mensal média', value: taxaAdesao, unit: '%', delta: 'inscritos x realizados', barColor: navy },
+      { label: 'Esforço extra', value: taxaEsforco, unit: '%', delta: `${totExc} turmas excedentes de ${totPlan}`, barColor: navy }
     ];
   }
 

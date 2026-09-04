@@ -97,8 +97,12 @@
   position: relative;
 }
 
+/* The whole card is the drag surface now (dragConfig has no `handle`), so the grab cursor
+   applies to the item itself — buttons/selects/.no-drag keep their own cursor since a rule
+   targeting an element directly always wins over this inherited one. */
 .dash-grid .react-grid-item {
   transition: transform 200ms ease, width 200ms ease, height 200ms ease;
+  cursor: grab;
 }
 
 .dash-grid .react-grid-item.react-draggable-dragging {
@@ -114,22 +118,22 @@
   box-shadow: 0 8px 22px -6px rgba(0, 78, 76, 0.28);
 }
 
+/* While dragging/resizing, the card itself follows the cursor in raw pixels — it only snaps
+   to the grid on release. Without a clearly visible target marker that final size is a
+   surprise. Drawn above the card (not behind it) so the frame reads correctly whether the
+   card is currently bigger or smaller than where it will land; pointer-events stay off so it
+   never steals the mouse from the actual drag/resize handlers. */
 .dash-grid .react-grid-placeholder {
-  background: rgba(0, 78, 76, 0.07);
+  background: rgba(0, 78, 76, 0.1);
+  border: 2px dashed rgba(0, 78, 76, 0.55);
   border-radius: 6px;
-  z-index: 1;
+  z-index: 35;
+  pointer-events: none;
 }
 
-.dash-card-drag-handle {
-  cursor: grab;
-}
-.dash-grid .react-grid-item.react-draggable-dragging .dash-card-drag-handle {
-  cursor: grabbing;
-}
-
-/* Resize handles: fully invisible at rest — only the cursor hints they're there.
-   Each handle reveals its own subtle marker only while the pointer is directly over it,
-   so hovering the card never lights up all eight at once. */
+/* Resize handles: fully invisible, always — just a thin hit zone along each edge/corner.
+   Only the cursor (se-resize, ew-resize, ...) hints they're there; no dot or bar is ever
+   drawn, so the card shows nothing but its chart. */
 .dash-grid .react-grid-item > .react-resizable-handle {
   position: absolute;
   z-index: 10;
@@ -137,36 +141,14 @@
 .dash-grid .react-grid-item.react-resizable-hide > .react-resizable-handle {
   display: none;
 }
-.dash-grid .react-resizable-handle::after {
-  content: '';
-  position: absolute;
-  background: #004e4c;
-  opacity: 0;
-  transition: opacity 120ms ease;
-  border-radius: 2px;
-}
-.dash-grid .react-resizable-handle:hover::after {
-  opacity: 0.55;
-}
 
-/* Corner handles: tiny hit zones, marked by a small dot only on hover */
+/* Corner handles: small hit zones right at each corner. */
 .dash-grid .react-resizable-handle-se,
 .dash-grid .react-resizable-handle-sw,
 .dash-grid .react-resizable-handle-ne,
 .dash-grid .react-resizable-handle-nw {
   width: 14px;
   height: 14px;
-}
-.dash-grid .react-resizable-handle-se::after,
-.dash-grid .react-resizable-handle-sw::after,
-.dash-grid .react-resizable-handle-ne::after,
-.dash-grid .react-resizable-handle-nw::after {
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
 }
 .dash-grid .react-resizable-handle-se {
   bottom: -4px;
@@ -189,7 +171,7 @@
   cursor: nw-resize;
 }
 
-/* Edge handles: thin invisible strips along each side, like modern editing tools */
+/* Edge handles: thin strips along each side. */
 .dash-grid .react-resizable-handle-e,
 .dash-grid .react-resizable-handle-w {
   top: 10px;
@@ -217,20 +199,4 @@
 }
 .dash-grid .react-resizable-handle-s {
   bottom: -5px;
-}
-.dash-grid .react-resizable-handle-e::after,
-.dash-grid .react-resizable-handle-w::after {
-  top: 50%;
-  left: 50%;
-  width: 3px;
-  height: 18px;
-  transform: translate(-50%, -50%);
-}
-.dash-grid .react-resizable-handle-n::after,
-.dash-grid .react-resizable-handle-s::after {
-  top: 50%;
-  left: 50%;
-  width: 18px;
-  height: 3px;
-  transform: translate(-50%, -50%);
 }

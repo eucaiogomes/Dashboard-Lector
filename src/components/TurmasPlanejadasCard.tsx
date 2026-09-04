@@ -33,7 +33,7 @@ export const TurmasPlanejadasCard: React.FC<TurmasPlanejadasCardProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-[22px] font-bold text-[#f47920] leading-tight">
+            <div className="text-[22px] font-bold text-[#00995d] leading-tight">
               {excedentes}
             </div>
             <div className="text-xs text-[#8a93a0] font-medium">

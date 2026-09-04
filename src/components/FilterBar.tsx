@@ -53,7 +53,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 <span className="font-semibold text-[#1f2733] whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px]">
                   {filter.value}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#f47920] shrink-0" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#004e4c] shrink-0" />
               </button>
 
               {/* Dropdown Popover */}
