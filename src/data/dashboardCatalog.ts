@@ -8,6 +8,8 @@ export interface ChartDataPoint {
 
 export type SupportedChartType = 'Barra' | 'Coluna' | 'Pizza' | 'Linha' | 'Tabela';
 
+export const STANDARD_CHART_TYPES: SupportedChartType[] = ['Coluna', 'Barra', 'Linha', 'Pizza'];
+
 export const DEFAULT_TRAINING_CATEGORIES = [
   'Todos os Treinamentos',
   'Cursos Obrigatórios (NRs)',
@@ -94,9 +96,11 @@ export const CHART_GROUPS = [
  * copy of a block from the Indicadores T&D tabs) instead of going through the generic chart
  * renderer. DashboardView looks up card.catalogId against these to branch rendering. */
 export const SPECIAL_WIDGET_IDS = {
+  institucionaisKpis: 'inst_kpis_summary',
   institucionaisTabs: 'inst_painel_tabs',
   institucionaisPercentual: 'inst_percentual_realizacao',
   institucionaisAgenda: 'inst_agenda',
+  internosKpis: 'internos_kpis_summary',
   internosEvolucao: 'internos_evolucao_metrica',
   internosAtivosTreinados: 'internos_ativos_treinados',
   internosTreinamentosHoras: 'internos_treinamentos_horas',
@@ -111,6 +115,30 @@ export const SPECIAL_WIDGET_IDS = {
 const specialWidgetStub = () => ({ data: [], maxScale: 0, ticks: [] });
 
 export const CHART_CATALOG: CatalogChartDef[] = [
+  // Resumo Geral de Treinamentos Institucionais (KPIs + Turmas)
+  {
+    id: SPECIAL_WIDGET_IDS.institucionaisKpis,
+    title: 'Resumo Geral de Treinamentos Institucionais (KPIs)',
+    subtitle: 'Previsto, agendado, realizado, pendente, adesão e turmas',
+    group: 'ted_indicadores',
+    icon: 'icon-performance',
+    description: 'Faixa de KPIs com Total Previsto, Agendado, Realizado, Não Realizado, % Realização e Turmas Planejadas x Excedentes.',
+    defaultType: 'Tabela',
+    allowedTypes: ['Tabela'],
+    generateData: specialWidgetStub
+  },
+  // Resumo Geral de Treinamentos Internos (KPIs + Turmas)
+  {
+    id: SPECIAL_WIDGET_IDS.internosKpis,
+    title: 'Resumo Geral de Treinamentos Internos (KPIs)',
+    subtitle: 'Participação, colaboradores treinados, horas e turmas',
+    group: 'ted_indicadores',
+    icon: 'icon-performance',
+    description: 'Faixa de KPIs com Total de Treinamentos, Participantes, Colaboradores Treinados, Horas Treinadas e Turmas Planejadas x Excedentes.',
+    defaultType: 'Tabela',
+    allowedTypes: ['Tabela'],
+    generateData: specialWidgetStub
+  },
   // ==========================================
   // GRUPO 1: INDICADORES DE T&D (TODOS JUNTOS NO MESMO GRUPO)
   // ==========================================
@@ -125,7 +153,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-performance',
     description: 'Traz o card com as três abas — Evolução Realizados, Previsto x Realizado e Tipo — exatamente como aparece em Indicadores T&D.',
     defaultType: 'Coluna',
-    allowedTypes: ['Coluna'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -138,7 +166,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-performance',
     description: 'Percentual mensal de realização (realizado ÷ previsto), exatamente como aparece em Indicadores T&D.',
     defaultType: 'Coluna',
-    allowedTypes: ['Coluna'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -164,7 +192,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-performance',
     description: 'Evolução mensal com seletor de métrica (Colaboradores, Horas, Participantes, Treinamentos), exatamente como aparece em Indicadores T&D.',
     defaultType: 'Coluna',
-    allowedTypes: ['Coluna'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -177,7 +205,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-participants',
     description: 'Card com abas Ativos x Treinados e Adesão, exatamente como aparece em Indicadores T&D.',
     defaultType: 'Coluna',
-    allowedTypes: ['Coluna'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -190,7 +218,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-courses',
     description: 'Ranking de treinamentos internos por horas treinadas, exatamente como aparece em Indicadores T&D.',
     defaultType: 'Barra',
-    allowedTypes: ['Barra'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -203,7 +231,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-medal',
     description: 'Card com abas Rank Geral e Rank Adesão, exatamente como aparece em Indicadores T&D.',
     defaultType: 'Barra',
-    allowedTypes: ['Barra'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 
@@ -229,7 +257,7 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     icon: 'icon-performance',
     description: 'Gráfico de rosca com o percentual de realização em destaque e a distribuição das turmas previstas entre Realizado, Agendado e Não Realizado.',
     defaultType: 'Pizza',
-    allowedTypes: ['Pizza'],
+    allowedTypes: STANDARD_CHART_TYPES,
     generateData: specialWidgetStub
   },
 

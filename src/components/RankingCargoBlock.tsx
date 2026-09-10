@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { RankTab } from '../types';
+import { RankTab, JobPositionData } from '../types';
 import { jobPositionsData } from '../data/mockData';
 import { VerDetalhesButton } from './VerDetalhesButton';
+import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
+import { UniversalChartRenderer } from './UniversalChartRenderer';
 
 interface RankingCargoBlockProps {
+  cargosData?: JobPositionData[];
   onVerDetalhes?: () => void;
 }
 
-/**
- * Exact copy of the "Ranking por Cargo" tabbed card from InternosView (Indicadores T&D →
- * Treinamentos Internos) — same markup and logic, unchanged, just relocated so it can be
- * added as a single widget on the Dashboard.
- */
-export const RankingCargoBlock: React.FC<RankingCargoBlockProps> = ({ onVerDetalhes }) => {
-  const cargosData = jobPositionsData;
-
+export const RankingCargoBlock: React.FC<RankingCargoBlockProps> = ({
+  cargosData = jobPositionsData,
+  onVerDetalhes
+}) => {
   const [rankTab, setRankTab] = useState<RankTab>('Rank Geral');
+  const [chartType, setChartType] = useState<ChartTypeOption>('Barra');
 
   const porRankAdesao = rankTab === 'Rank Adesão';
   const cargosSorted = [...cargosData].sort((a, b) =>
@@ -23,75 +23,67 @@ export const RankingCargoBlock: React.FC<RankingCargoBlockProps> = ({ onVerDetal
       ? b.treinados / b.ativos - a.treinados / a.ativos
       : b.participantes - a.participantes
   );
-  const maxPart = Math.max(...cargosData.map(c => c.participantes));
+
+  const dataPoints = porRankAdesao
+    ? cargosSorted.map(c => ({
+        label: c.cargo,
+        value: c.ativos > 0 ? Math.round((c.treinados / c.ativos) * 100) : 0,
+        extra: `${c.treinados}/${c.ativos}`
+      }))
+    : cargosSorted.map(c => ({
+        label: c.cargo,
+        value: c.participantes
+      }));
 
   return (
-    <div className="bg-white border border-[#e4e8ee] rounded-[6px] shadow-2xs overflow-hidden">
-      <div className="flex border-b border-[#e4e8ee] bg-[#fcfdfe]">
-        {(['Rank Geral', 'Rank Adesão'] as RankTab[]).map(tab => {
-          const isActive = rankTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setRankTab(tab)}
-              className={`h-10 px-4 border-none text-[13px] font-semibold cursor-pointer transition-all border-b-2 ${
-                isActive
-                  ? 'bg-white text-[#004e4c] border-[#f47920]'
-                  : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#004e4c]'
-              }`}
-            >
-              {tab}
-            </button>
-          );
-        })}
+    <div className="bg-white border border-[#e4e8ee] rounded-[6px] shadow-2xs h-full w-full flex flex-col justify-between overflow-hidden relative">
+      <div className="flex border-b border-[#e4e8ee] bg-[#fcfdfe] items-center justify-between rounded-t-[6px] overflow-hidden shrink-0">
+        <div className="flex">
+          {(['Rank Geral', 'Rank Adesão'] as RankTab[]).map(tab => {
+            const isActive = rankTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setRankTab(tab)}
+                className={`h-[38px] px-3 sm:px-4 border-none text-[12px] sm:text-[12.5px] font-semibold cursor-pointer transition-all border-b-2 ${
+                  isActive
+                    ? 'bg-white text-[#004e4c] border-[#f47920]'
+                    : 'bg-[#f6f8fa] text-[#6b7684] border-transparent hover:text-[#004e4c]'
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="p-3.5 px-4.5 pb-4">
-        <div className="text-[12.5px] text-[#8a93a0] font-medium">
+      <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-3.5 overflow-hidden">
+        <div className="text-[11.5px] text-[#8a93a0] font-medium mb-1 shrink-0 truncate">
           {porRankAdesao
             ? 'Cargo por percentual de ativos com adesão'
             : 'Cargo por quantidade total de participantes'}
         </div>
 
-        <div className="mt-3.5 flex flex-col gap-2.5">
-          {cargosSorted.map((c, i) => {
-            const pct = Math.round((c.treinados / c.ativos) * 100);
-            const wBase = porRankAdesao ? '100%' : `${(c.participantes / maxPart) * 100}%`;
-            const wFore = porRankAdesao ? `${pct}%` : `${(c.participantes / maxPart) * 100}%`;
-            const legenda = porRankAdesao
-              ? `${c.treinados}/${c.ativos} · ${pct}%`
-              : c.participantes.toLocaleString('pt-BR');
-
-            return (
-              <div
-                key={i}
-                className="grid grid-cols-[minmax(104px,158px)_minmax(50px,1fr)_auto] gap-2.5 items-center"
-              >
-                <div
-                  className="text-[12.5px] text-[#004e4c] font-medium truncate"
-                  title={c.cargo}
-                >
-                  {c.cargo}
-                </div>
-                <div className="h-[17px] bg-[#f4f6f9] rounded-[3px] relative overflow-hidden">
-                  <div
-                    className="absolute inset-y-0 left-0 bg-[#cde3bb] rounded-[3px]"
-                    style={{ width: wBase }}
-                  ></div>
-                  <div
-                    className="absolute inset-y-0 left-0 bg-[#004e4c] rounded-[3px] transition-all"
-                    style={{ width: wFore }}
-                  ></div>
-                </div>
-                <div className="text-xs text-[#6b7684] whitespace-nowrap font-medium">
-                  {legenda}
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
+          <UniversalChartRenderer
+            data={dataPoints}
+            chartType={chartType}
+            unit={porRankAdesao ? '%' : ''}
+            legendPrimary={porRankAdesao ? '% Adesão' : 'Participantes'}
+            primaryColor="#004e4c"
+          />
         </div>
+      </div>
 
-        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} />}
+      {/* Card Footer: Tipo de gráfico + Ver Detalhes */}
+      <div className="shrink-0 pt-2 border-t border-[#f0f3f7] px-4 pb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <ChartTypeSelector
+          currentType={chartType}
+          onChangeType={setChartType}
+          direction="up"
+        />
+        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} className="mt-0" />}
       </div>
     </div>
   );

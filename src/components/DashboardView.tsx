@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import GridLayout, { LayoutItem, useContainerWidth } from 'react-grid-layout';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import GridLayout, { LayoutItem, verticalCompactor, useContainerWidth } from 'react-grid-layout';
 import {
   CHART_CATALOG,
   CHART_GROUPS,
@@ -20,13 +20,16 @@ import { RankingCargoBlock } from './RankingCargoBlock';
 import { CentroCustoTableBlock } from './CentroCustoTableBlock';
 import { TurmasExecucaoDonutBlock } from './TurmasExecucaoDonutBlock';
 import { EducacaoPermanenteBlock } from './EducacaoPermanenteBlock';
+import { InstitucionaisKpiBlock } from './InstitucionaisKpiBlock';
+import { InternosKpiBlock } from './InternosKpiBlock';
 import { AddChartModal } from './AddChartModal';
 import { AddPanelModal } from './AddPanelModal';
-import { IndicadoresFullPageView } from './IndicadoresFullPageView';
+import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ReportDetailOverlay } from './ReportDetailOverlay';
 import { REPORT_DEFINITIONS } from '../data/reportDefinitions';
 import { ViewType } from '../types';
+import { X } from 'lucide-react';
 import {
   GRID_COLS,
   GRID_MARGIN,
@@ -52,9 +55,11 @@ interface SpecialWidgetProps {
 /** Maps each special-widget catalog id to the bespoke component that renders it, bypassing
  * the generic chart renderer / card chrome. See dashboardCatalog.ts SPECIAL_WIDGET_IDS. */
 const SPECIAL_WIDGETS: Record<string, React.FC<SpecialWidgetProps>> = {
+  [SPECIAL_WIDGET_IDS.institucionaisKpis]: InstitucionaisKpiBlock,
   [SPECIAL_WIDGET_IDS.institucionaisTabs]: InstitucionaisTabsBlock,
   [SPECIAL_WIDGET_IDS.institucionaisPercentual]: InstitucionaisPercentualBlock,
   [SPECIAL_WIDGET_IDS.institucionaisAgenda]: AgendaBlock,
+  [SPECIAL_WIDGET_IDS.internosKpis]: InternosKpiBlock,
   [SPECIAL_WIDGET_IDS.internosEvolucao]: InternosEvolucaoBlock,
   [SPECIAL_WIDGET_IDS.internosAtivosTreinados]: AtivosTreinadosBlock,
   [SPECIAL_WIDGET_IDS.internosTreinamentosHoras]: TreinamentosRankingBlock,
@@ -73,33 +78,58 @@ const DEFAULT_LAYOUT_SPEC: { catalogId: string; x: number; y: number; w: number;
   // Execução das Turmas — full-width summary at the top, like the Qlik KPI strip.
   { catalogId: SPECIAL_WIDGET_IDS.turmasExecucao, x: 0, y: 0, w: 12, h: 8 },
 
-  // Institucionais — tabbed evolution (tall, left) beside % Realização + Agenda (stacked, right).
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 8, w: 6, h: 16 },
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 8, w: 6, h: 8 },
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 16, w: 6, h: 8 },
+  // Institucionais — tabbed evolution beside % Realização + Agenda.
+  { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 8, w: 6, h: 12 },
+  { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 8, w: 6, h: 6 },
+  { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 14, w: 6, h: 6 },
 
-  // Internos — Evolução (tall, left) / Ativos x Treinados + Treinamentos (stacked, middle) /
-  // Ranking por Cargo (tall, right) — same 3-column arrangement as the original screen.
-  { catalogId: SPECIAL_WIDGET_IDS.internosEvolucao, x: 0, y: 24, w: 4, h: 16 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosAtivosTreinados, x: 4, y: 24, w: 4, h: 8 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosTreinamentosHoras, x: 4, y: 32, w: 4, h: 8 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 24, w: 4, h: 16 },
+  // Internos — Evolução (left) / Ativos x Treinados + Treinamentos (middle) / Ranking por Cargo (right).
+  { catalogId: SPECIAL_WIDGET_IDS.internosEvolucao, x: 0, y: 20, w: 4, h: 12 },
+  { catalogId: SPECIAL_WIDGET_IDS.internosAtivosTreinados, x: 4, y: 20, w: 4, h: 6 },
+  { catalogId: SPECIAL_WIDGET_IDS.internosTreinamentosHoras, x: 4, y: 26, w: 4, h: 6 },
+  { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 20, w: 4, h: 12 },
 
   // Centro de Custo — full-width table at the bottom.
-  { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 40, w: 12, h: 8 },
+  { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 32, w: 12, h: 9 },
 
-  // Educação Permanente — ficha por setor, abaixo de tudo.
-  { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 48, w: 6, h: 10 }
+  // Educação Permanente — ficha por setor, abrangendo a largura completa abaixo de tudo.
+  { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 41, w: 12, h: 8 }
 ];
 
-/** Presets offered by the "Adicionar Painel" list — each creates a new tab that renders an
- * exact, self-contained replica of its Indicadores T&D screen (IndicadoresFullPageView),
- * not a grid of individual widgets. `id` doubles as the ViewType passed to that component. */
+/** Presets offered by the "Adicionar Painel" list — each creates a new tab that populates
+ * its own full set of draggable, resizable cards on the grid. */
 const PANEL_TEMPLATES: { id: ViewType; name: string }[] = [
   { id: 'Treinamentos Institucionais', name: 'Treinamentos Institucionais' },
   { id: 'Treinamentos Internos', name: 'Treinamentos Internos' },
   { id: 'Por Centro de Custo', name: 'Por Centro de Custo' }
 ];
+
+const TEMPLATE_LAYOUT_SPECS: Record<ViewType, { catalogId: string; x: number; y: number; w: number; h: number }[]> = {
+  'Treinamentos Institucionais': [
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisKpis, x: 0, y: 0, w: 12, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 6, w: 6, h: 12 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 6, w: 6, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 12, w: 6, h: 6 }
+  ],
+  'Treinamentos Internos': [
+    { catalogId: SPECIAL_WIDGET_IDS.internosKpis, x: 0, y: 0, w: 12, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.internosEvolucao, x: 0, y: 6, w: 4, h: 12 },
+    { catalogId: SPECIAL_WIDGET_IDS.internosAtivosTreinados, x: 4, y: 6, w: 4, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.internosTreinamentosHoras, x: 4, y: 12, w: 4, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 6, w: 4, h: 12 }
+  ],
+  'Por Centro de Custo': [
+    { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 0, w: 12, h: 9 }
+  ]
+};
+
+const createPanelFromTemplate = (
+  templateId: ViewType,
+  period: string
+): { cards: DashboardCardItem[]; layout: LayoutItem[] } => {
+  const spec = TEMPLATE_LAYOUT_SPECS[templateId] ?? [];
+  return buildDashboardFromSpec(spec, period);
+};
 
 /** Builds cards + a grid layout from a subset of DEFAULT_LAYOUT_SPEC, so each card id lines up
  * with its fixed slot. Positions are normalized to start at y=0 so a template panel doesn't
@@ -203,7 +233,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddPanelModal, setShowAddPanelModal] = useState(false);
-  const [openTypeDropdown, setOpenTypeDropdown] = useState<string | null>(null);
   const [selectedCardForModal, setSelectedCardForModal] = useState<DashboardCardItem | null>(null);
   const [detailsReportCatalogId, setDetailsReportCatalogId] = useState<string | null>(null);
   const [editingPanelId, setEditingPanelId] = useState<string | null>(null);
@@ -220,16 +249,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         const { cards: defaultCards, layout: defaultLayout } = createDefaultDashboard('Agosto - 2026');
         const cardIds = defaultCards.map(c => c.id);
         const storedLayout = loadStoredLayout(meta.id);
+        const initialLayout = storedLayout.length > 0 ? reconcileLayout(storedLayout, cardIds) : defaultLayout;
         return {
           id: meta.id,
           name: meta.name,
           cards: defaultCards,
-          layout: storedLayout.length > 0 ? reconcileLayout(storedLayout, cardIds) : defaultLayout
+          layout: verticalCompactor.compact(initialLayout, GRID_COLS)
         };
       }
-      const knownTemplate = PANEL_TEMPLATES.find(t => t.id === meta.templateId);
-      if (knownTemplate) {
-        return { id: meta.id, name: meta.name, templateId: knownTemplate.id, cards: [], layout: [] };
+      const knownTemplate = PANEL_TEMPLATES.find(
+        t => t.id === meta.templateId || t.name === meta.name || meta.name.startsWith(t.name.slice(0, 15))
+      );
+      if (knownTemplate && TEMPLATE_LAYOUT_SPECS[knownTemplate.id]) {
+        const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(knownTemplate.id, 'Agosto - 2026');
+        const cardIds = templateCards.map(c => c.id);
+        const storedLayout = loadStoredLayout(meta.id);
+        const initialLayout = storedLayout.length > 0 ? reconcileLayout(storedLayout, cardIds) : templateLayout;
+        return {
+          id: meta.id,
+          name: meta.name,
+          templateId: knownTemplate.id,
+          cards: templateCards,
+          layout: verticalCompactor.compact(initialLayout, GRID_COLS)
+        };
       }
       // Blank panels only persist metadata + layout, not chart cards — they start blank
       // on reload (same limitation the single-dashboard layout already had).
@@ -269,8 +311,129 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     }));
   };
 
+  // If an active panel has templateId (or matches a known template by name) but currently has 0 cards,
+  // automatically populate its draggable cards and layout so the user can immediately move and resize them.
+  useEffect(() => {
+    const templateMatch = PANEL_TEMPLATES.find(
+      t => t.id === activePanel.templateId || t.name === activePanel.name || activePanel.name.startsWith(t.name.slice(0, 15))
+    );
+    if (activePanel.cards.length === 0 && templateMatch && TEMPLATE_LAYOUT_SPECS[templateMatch.id]) {
+      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(templateMatch.id, selectedPeriod);
+      updateActivePanel(p => ({
+        ...p,
+        templateId: templateMatch.id,
+        cards: templateCards,
+        layout: templateLayout
+      }));
+    }
+  }, [activePanelId, activePanel.cards.length, activePanel.templateId, activePanel.name, selectedPeriod]);
+
+  // Automatically separate any overlapping cards from previous sessions
+  useEffect(() => {
+    if (layout.length > 0) {
+      const compacted = verticalCompactor.compact(layout, GRID_COLS);
+      const hasCollision = compacted.some(item => {
+        const orig = layout.find(l => l.i === item.i);
+        return orig && (orig.x !== item.x || orig.y !== item.y);
+      });
+      if (hasCollision) {
+        setLayout(compacted);
+      }
+    }
+  }, [activePanelId]);
+
   const isDesktop = useIsDesktop();
   const { width: gridWidth, mounted: gridMounted, containerRef: gridContainerRef } = useContainerWidth();
+  const rootContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll when dragging near viewport edges so users can drag cards downwards below the fold
+  const autoScrollRafRef = useRef<number | null>(null);
+  const dragPointerYRef = useRef<number | null>(null);
+  const dragPointerXRef = useRef<number | null>(null);
+
+  const startAutoScroll = useCallback(() => {
+    if (autoScrollRafRef.current !== null) return;
+
+    const tick = () => {
+      const y = dragPointerYRef.current;
+      const x = dragPointerXRef.current ?? (typeof window !== 'undefined' ? window.innerWidth / 2 : 500);
+      if (y !== null) {
+        const vh = window.innerHeight;
+        const edgeThreshold = 140;
+        const isElementScroll = isFullscreen && rootContainerRef.current;
+        const target = isElementScroll ? rootContainerRef.current : window;
+
+        if (y > vh - edgeThreshold) {
+          // Pointer near bottom: scroll down
+          const intensity = Math.min(36, Math.max(8, ((y - (vh - edgeThreshold)) / edgeThreshold) * 40));
+          if (isElementScroll) {
+            (target as HTMLElement).scrollTop += intensity;
+          } else {
+            window.scrollBy({ top: intensity, behavior: 'auto' });
+          }
+
+          // Dispatch synthetic mousemove on document so react-draggable & react-grid-layout
+          // recalculate parent offset and continuously advance the dragged element downwards
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              clientX: x,
+              clientY: y,
+              bubbles: true,
+              cancelable: true
+            })
+          );
+        } else if (y < edgeThreshold) {
+          // Pointer near top: scroll up
+          const intensity = Math.min(36, Math.max(8, ((edgeThreshold - y) / edgeThreshold) * 40));
+          if (isElementScroll) {
+            if ((target as HTMLElement).scrollTop > 0) (target as HTMLElement).scrollTop -= intensity;
+          } else {
+            if (window.scrollY > 0) window.scrollBy({ top: -intensity, behavior: 'auto' });
+          }
+
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              clientX: x,
+              clientY: y,
+              bubbles: true,
+              cancelable: true
+            })
+          );
+        }
+      }
+      autoScrollRafRef.current = requestAnimationFrame(tick);
+    };
+
+    autoScrollRafRef.current = requestAnimationFrame(tick);
+  }, [isFullscreen]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollRafRef.current !== null) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+    dragPointerYRef.current = null;
+    dragPointerXRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      if (autoScrollRafRef.current !== null) {
+        dragPointerYRef.current = e.clientY;
+        dragPointerXRef.current = e.clientX;
+      }
+    };
+    const handleUp = () => {
+      stopAutoScroll();
+    };
+    window.addEventListener('mousemove', handleMove, { passive: true });
+    window.addEventListener('mouseup', handleUp, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+      stopAutoScroll();
+    };
+  }, [stopAutoScroll]);
 
   useEffect(() => {
     saveStoredLayout(layout, activePanelId);
@@ -303,12 +466,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     }
     const template = PANEL_TEMPLATES.find(t => t.id === view);
     if (!template) return;
+    const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(template.id, selectedPeriod);
     const newPanel: DashboardPanel = {
       id: `panel_${Date.now()}`,
       name: template.name,
       templateId: template.id,
-      cards: [],
-      layout: []
+      cards: templateCards,
+      layout: templateLayout
     };
     setPanels(prev => [...prev, newPanel]);
     setActivePanelId(newPanel.id);
@@ -322,12 +486,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     templateIds.forEach((templateId, index) => {
       const template = PANEL_TEMPLATES.find(t => t.id === templateId);
       if (!template) return;
+      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(template.id, selectedPeriod);
       newPanels.push({
         id: `panel_${Date.now()}_${index}`,
         name: template.name,
         templateId: template.id,
-        cards: [],
-        layout: []
+        cards: templateCards,
+        layout: templateLayout
       });
     });
 
@@ -384,14 +549,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     };
 
     setCards(prev => [...prev, newCard]);
-    setLayout(prev => reconcileLayout(prev, [...prev.map(item => item.i), newCard.id]));
+    setLayout(prev => {
+      const reconciled = reconcileLayout(prev, [...prev.map(item => item.i), newCard.id]);
+      return verticalCompactor.compact(reconciled, GRID_COLS);
+    });
   };
 
   const handleChangeChartType = (cardId: string, newType: SupportedChartType) => {
     setCards(prev =>
       prev.map(card => (card.id === cardId ? { ...card, chartType: newType } : card))
     );
-    setOpenTypeDropdown(null);
   };
 
   const handleCardCategoryChange = (cardId: string, newCategory: string) => {
@@ -414,13 +581,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     );
   };
 
-  // On the default panel this restores the original "bloco completo" widget set; on a panel
-  // the user created (which never had a default set) it just clears it back to blank.
+  // On the default panel or template panels this restores the original widget set; on a blank panel
+  // the user created it clears it back to blank.
   const handleResetDefaultCards = () => {
     if (activePanelId === DEFAULT_PANEL_ID) {
       const { cards: defaultCards, layout: defaultLayout } = createDefaultDashboard(selectedPeriod);
       setCards(defaultCards);
       setLayout(defaultLayout);
+    } else if (activePanel.templateId && TEMPLATE_LAYOUT_SPECS[activePanel.templateId]) {
+      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(activePanel.templateId, selectedPeriod);
+      setCards(templateCards);
+      setLayout(templateLayout);
     } else {
       setCards([]);
       setLayout([]);
@@ -447,21 +618,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         >
           {options.interactive && (
             <div
-              className="absolute inset-x-0 top-0 h-7 flex items-center justify-end px-2 z-10 opacity-0 group-hover/special:opacity-100 transition-opacity"
+              className="absolute right-3 top-3 z-20 opacity-0 group-hover/special:opacity-100 transition-opacity duration-150"
             >
               <button
+                type="button"
                 onClick={() => handleRemoveCard(card.id)}
-                className="no-drag text-[#8a93a0] hover:text-[#f47920] p-1 transition-colors cursor-pointer rounded bg-white/90 hover:bg-[#f5f8fa] shadow-2xs"
-                title="Remover gráfico do Dashboard"
+                className="no-drag w-6 h-6 rounded-full flex items-center justify-center bg-white/95 text-[#94a3b8] hover:text-[#ef4444] hover:bg-[#fee2e2] border border-[#e2e8f0] hover:border-[#fca5a5] shadow-xs hover:shadow transition-all duration-150 cursor-pointer hover:scale-110 active:scale-95"
+                title="Remover gráfico"
+                aria-label="Remover gráfico"
               >
-                <i className="icon-close-mini text-[14px]"></i>
+                <X size={12} strokeWidth={2.5} />
               </button>
             </div>
           )}
-          <div className="flex-1 min-h-0 overflow-auto">
-            {/* "Ver Detalhes" is rendered by the widget itself, as a real row inside its own
-                card — so it always sits fully inside the card's frame instead of floating
-                over the chart when the card is taller than its content. */}
+          <div className="h-full w-full flex-1 min-h-0">
             <SpecialWidget
               onVerDetalhes={hasReport ? () => setDetailsReportCatalogId(card.catalogId) : undefined}
             />
@@ -530,11 +700,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
 
               {/* Remove card button */}
               <button
+                type="button"
                 onClick={() => handleRemoveCard(card.id)}
-                className="text-[#8a93a0] hover:text-[#f47920] p-1 transition-colors cursor-pointer rounded hover:bg-[#f5f8fa]"
-                title="Remover gráfico do Dashboard"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[#94a3b8] hover:text-[#ef4444] hover:bg-[#fee2e2] border border-transparent hover:border-[#fca5a5] transition-all duration-150 cursor-pointer hover:scale-110 active:scale-95"
+                title="Remover gráfico"
+                aria-label="Remover gráfico"
               >
-                <i className="icon-close-mini text-[14px]"></i>
+                <X size={12} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -551,36 +723,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
 
         {/* Card Footer / Chart Type Selector & Detailed Indicators CTA */}
         <div className="pt-3 mt-3 border-t border-[#f0f3f7] shrink-0 flex flex-wrap items-center justify-between gap-2 text-[12.5px] no-drag">
-          <div className="flex items-center gap-1.5 text-[#606d80] relative">
-            <span>Tipo de gráfico:</span>
-            <button
-              onClick={() => setOpenTypeDropdown(openTypeDropdown === card.id ? null : card.id)}
-              className="font-semibold text-[#f47920] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <span>{card.chartType}</span>
-              <i className="icon-pointer-down text-[9px]"></i>
-            </button>
-
-            {/* Chart type dropdown menu */}
-            {openTypeDropdown === card.id && (
-              <div className="absolute left-24 bottom-6 bg-white border border-[#dfe4ea] rounded-[4px] shadow-lg py-1 z-30 min-w-[120px]">
-                {card.allowedTypes.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => handleChangeChartType(card.id, t)}
-                    className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f5f8fa] hover:text-[#004e4c] flex items-center justify-between cursor-pointer ${
-                      card.chartType === t
-                        ? 'text-[#f47920] font-bold bg-[#f47920]/5'
-                        : 'text-[#4a5462]'
-                    }`}
-                  >
-                    <span>{t}</span>
-                    {card.chartType === t && <i className="icon-calendar-today text-[10px]"></i>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ChartTypeSelector
+            currentType={card.chartType as ChartTypeOption}
+            onChangeType={newType => handleChangeChartType(card.id, newType as SupportedChartType)}
+            allowedTypes={card.allowedTypes.filter(t => t !== 'Tabela') as ChartTypeOption[]}
+            direction="up"
+          />
 
           {/* Ver Detalhes Action Button */}
           <div className="flex items-center gap-2">
@@ -600,8 +748,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
 
   return (
     <div
-      className={`p-6 min-h-[calc(100vh-280px)] bg-[#f4f6f9] transition-all ${
-        isFullscreen ? 'fixed inset-0 z-50 bg-[#f4f6f9] p-8 overflow-y-auto' : ''
+      ref={rootContainerRef}
+      className={`p-6 pb-24 lg:pb-36 min-h-[calc(100vh-280px)] bg-[#f4f6f9] transition-all ${
+        isFullscreen ? 'fixed inset-0 z-50 bg-[#f4f6f9] p-8 pb-32 overflow-y-auto' : ''
       }`}
     >
       {/* Dashboard chrome (header, panel tabs, toolbar) — hidden when printing. A template
@@ -627,60 +776,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         </div>
       </div>
 
-      {/* Panel Tabs — switch between independent dashboard "abas" */}
-      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-        {panels.map(panel => (
-          <div
-            key={panel.id}
-            onClick={() => setActivePanelId(panel.id)}
-            onDoubleClick={() => setEditingPanelId(panel.id)}
-            className={`group relative flex items-center gap-1.5 h-[30px] pl-3 pr-2 rounded-[6px] border text-[12.5px] font-semibold cursor-pointer transition-colors ${
-              panel.id === activePanelId
-                ? 'bg-[#004e4c] border-[#004e4c] text-[#eef7f4]'
-                : 'bg-white border-[#e0e5eb] text-[#4a5462] hover:border-[#004e4c] hover:text-[#004e4c]'
-            }`}
-            title="Clique para abrir a aba, duplo clique para renomear"
-          >
-            {editingPanelId === panel.id ? (
-              <input
-                autoFocus
-                defaultValue={panel.name}
-                onClick={e => e.stopPropagation()}
-                onBlur={e => {
-                  handleRenamePanel(panel.id, e.target.value);
-                  setEditingPanelId(null);
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') e.currentTarget.blur();
-                  if (e.key === 'Escape') setEditingPanelId(null);
-                }}
-                className="bg-transparent outline-none border-b border-current w-24 text-inherit"
-              />
-            ) : (
-              <span className="truncate max-w-[140px]">{panel.name}</span>
-            )}
-
-            {panels.length > 1 && (
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  handleRemovePanel(panel.id);
-                }}
-                className={`no-drag opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded cursor-pointer ${
-                  panel.id === activePanelId ? 'hover:bg-white/20 text-[#eef7f4]' : 'hover:bg-[#f0f4f8] text-[#8a93a0]'
-                }`}
-                title="Remover painel"
-              >
-                <i className="icon-close-mini text-[11px]"></i>
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
       {/* Filter Row & Add Chart Action — stays in this same top position on every panel
-          (including template ones), right below the panel tabs. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-white p-2.5 px-3.5 rounded-[6px] border border-[#e0e5eb] shadow-2xs">
+          (including template ones). */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 bg-white p-2.5 px-3.5 rounded-[6px] border border-[#e0e5eb] shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Date Selector Pill */}
           <div className="relative flex items-center h-[34px] px-3.5 bg-[#f8fafc] border border-[#cfd6e0] rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors">
@@ -720,61 +818,126 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           </button>
         </div>
       </div>
-      </div>
-      {/* IndicadoresFullPageView renders OUTSIDE the no-print wrapper above: it's its own
-          printable report (own print-only masthead, .no-print on just its interactive chrome),
-          so "Gerar PDF" from inside a panel actually prints the report instead of a blank page —
-          everything under the Dashboard's own .no-print wrapper is hidden on print. */}
-      {activePanel.templateId && (
-        <IndicadoresFullPageView key={activePanel.id} initialView={activePanel.templateId} />
-      )}
-      <div className="no-print">
-      {/* Empty State — skipped on template panels, where "no extra charts yet" below a full
-          report reads as a stray error message rather than a real empty dashboard. */}
-      {cards.length === 0 ? (
-        activePanel.templateId ? null : (
-            <div className="bg-white rounded-lg border border-[#e0e5eb] p-12 text-center shadow-2xs">
-              <div className="w-16 h-16 rounded-full bg-[#004e4c]/10 text-[#004e4c] flex items-center justify-center mx-auto mb-3">
-                <i className="icon-performance text-[28px]"></i>
-              </div>
-              <h3 className="text-base font-bold text-[#004e4c]">Nenhum gráfico no painel</h3>
-              <p className="text-xs text-[#6b7684] max-w-md mx-auto mt-1 mb-4">
-                Seu Dashboard está vazio. Clique no botão abaixo para escolher entre os {CHART_CATALOG.length} gráficos disponíveis dos Indicadores T&amp;D.
-              </p>
+
+      {/* Panel Tabs — switch between independent dashboard "abas" (now positioned below the filter/action toolbar) */}
+      <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+        {panels.map(panel => (
+          <div
+            key={panel.id}
+            onClick={() => setActivePanelId(panel.id)}
+            onDoubleClick={() => setEditingPanelId(panel.id)}
+            className={`group relative flex items-center gap-1.5 h-[30px] pl-3 pr-2 rounded-[6px] border text-[12.5px] font-semibold cursor-pointer transition-colors ${
+              panel.id === activePanelId
+                ? 'bg-[#004e4c] border-[#004e4c] text-[#eef7f4]'
+                : 'bg-white border-[#e0e5eb] text-[#4a5462] hover:border-[#004e4c] hover:text-[#004e4c]'
+            }`}
+            title="Clique para abrir a aba, duplo clique para renomear"
+          >
+            {editingPanelId === panel.id ? (
+              <input
+                autoFocus
+                defaultValue={panel.name}
+                onClick={e => e.stopPropagation()}
+                onBlur={e => {
+                  handleRenamePanel(panel.id, e.target.value);
+                  setEditingPanelId(null);
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') e.currentTarget.blur();
+                  if (e.key === 'Escape') setEditingPanelId(null);
+                }}
+                className="bg-transparent outline-none border-b border-current w-24 text-inherit"
+              />
+            ) : (
+              <span className="truncate max-w-[140px]">{panel.name}</span>
+            )}
+
+            {panels.length > 1 && (
               <button
-                onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 bg-[#00995d] hover:bg-[#00824f] text-[#eef7f4] text-xs font-bold rounded shadow cursor-pointer transition-all"
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleRemovePanel(panel.id);
+                }}
+                className={`no-drag opacity-0 group-hover:opacity-100 transition-all w-4 h-4 rounded-full flex items-center justify-center cursor-pointer ${
+                  panel.id === activePanelId
+                    ? 'hover:bg-white/25 text-[#eef7f4]'
+                    : 'hover:bg-[#fee2e2] hover:text-[#ef4444] text-[#8a93a0]'
+                }`}
+                title="Remover painel"
+                aria-label="Remover painel"
               >
-                <i className="icon-plus mr-1.5"></i>
-                Explorar Catálogo de Gráficos
+                <X size={10} strokeWidth={2.5} />
               </button>
-            </div>
-        )
-          ) : isDesktop ? (
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {cards.length === 0 ? (
+        <div className="bg-white rounded-lg border border-[#e0e5eb] p-12 text-center shadow-2xs">
+          <div className="w-16 h-16 rounded-full bg-[#004e4c]/10 text-[#004e4c] flex items-center justify-center mx-auto mb-3">
+            <i className="icon-performance text-[28px]"></i>
+          </div>
+          <h3 className="text-base font-bold text-[#004e4c]">Nenhum gráfico no painel</h3>
+          <p className="text-xs text-[#6b7684] max-w-md mx-auto mt-1 mb-4">
+            Seu painel está vazio. Clique no botão abaixo para escolher entre os {CHART_CATALOG.length} gráficos disponíveis dos Indicadores T&amp;D.
+          </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-[#00995d] hover:bg-[#00824f] text-[#eef7f4] text-xs font-bold rounded shadow cursor-pointer transition-all"
+          >
+            <i className="icon-plus mr-1.5"></i>
+            Explorar Catálogo de Gráficos
+          </button>
+        </div>
+      ) : isDesktop ? (
             /* Cards Grid — desktop: drag to reposition, resize from any edge/corner */
-            <div ref={gridContainerRef}>
+            <div ref={gridContainerRef} className="pb-48 lg:pb-64 min-h-[90vh]">
               {gridMounted && (
                 <GridLayout
                   width={gridWidth}
                   layout={layout}
                   onLayoutChange={setLayout}
-                  className="dash-grid"
+                  className="dash-grid min-h-[85vh]"
+                  compactor={verticalCompactor}
                   gridConfig={{ cols: GRID_COLS, rowHeight: ROW_HEIGHT, margin: GRID_MARGIN }}
                   dragConfig={{ cancel: 'select, button, .no-drag' }}
                   resizeConfig={{ handles: ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] }}
+                  onDragStart={(_layout, _oldItem, _newItem, _placeholder, e) => {
+                    if (e && 'clientY' in e) {
+                      dragPointerYRef.current = (e as MouseEvent).clientY;
+                      dragPointerXRef.current = (e as MouseEvent).clientX;
+                    }
+                    startAutoScroll();
+                  }}
+                  onDrag={(_layout, _oldItem, _newItem, _placeholder, e) => {
+                    if (e && 'clientY' in e) {
+                      dragPointerYRef.current = (e as MouseEvent).clientY;
+                      dragPointerXRef.current = (e as MouseEvent).clientX;
+                    }
+                  }}
+                  onDragStop={() => {
+                    stopAutoScroll();
+                  }}
                 >
                   {cards.map(card => renderCard(card, { interactive: true }))}
                 </GridLayout>
               )}
+              {/* Bottom breathing room spacer / drop target area */}
+              <div className="h-20 lg:h-32 w-full" aria-hidden="true" />
             </div>
           ) : (
             /* Cards Grid — mobile/tablet: stacked single column, position/size editing is desktop-only */
-            <div className="grid grid-cols-1 gap-5">
+            <div className="grid grid-cols-1 gap-5 pb-24 lg:pb-36">
               {cards.map(card => {
                 const item = layout.find(l => l.i === card.id);
                 const heightPx = item ? item.h * ROW_HEIGHT + (item.h - 1) * GRID_MARGIN[1] : undefined;
                 return renderCard(card, { interactive: false, heightPx });
               })}
+              {/* Bottom breathing room spacer */}
+              <div className="h-12 lg:h-16 w-full" aria-hidden="true" />
             </div>
           )}
 

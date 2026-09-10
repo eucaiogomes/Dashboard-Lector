@@ -1,54 +1,58 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { MonthData } from '../types';
 import { monthlyBaseData } from '../data/mockData';
 import { VerDetalhesButton } from './VerDetalhesButton';
+import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
+import { UniversalChartRenderer } from './UniversalChartRenderer';
 
 interface InstitucionaisPercentualBlockProps {
+  baseData?: MonthData[];
   onVerDetalhes?: () => void;
 }
 
-/**
- * Exact copy of the "Evolução — Percentual de Realização" card from InstitucionaisView
- * (Indicadores T&D → Treinamentos Institucionais) — same markup and logic, unchanged,
- * just relocated so it can be added as a single widget on the Dashboard.
- */
-export const InstitucionaisPercentualBlock: React.FC<InstitucionaisPercentualBlockProps> = ({ onVerDetalhes }) => {
-  const baseData = monthlyBaseData;
+export const InstitucionaisPercentualBlock: React.FC<InstitucionaisPercentualBlockProps> = ({
+  baseData = monthlyBaseData,
+  onVerDetalhes
+}) => {
+  const [chartType, setChartType] = useState<ChartTypeOption>('Coluna');
+
+  const dataPercentual = baseData.map(m => {
+    const pct = m.previsto > 0 ? Math.round((m.realizado / m.previsto) * 100) : 0;
+    const color = pct >= 100 ? '#004e4c' : pct >= 50 ? '#1f8f78' : '#a9d68f';
+    return {
+      label: m.mesAno,
+      value: pct,
+      color
+    };
+  });
 
   return (
-    <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-4 px-5 pb-3.5 shadow-2xs">
-      <div className="text-[15px] font-bold text-[#004e4c]">
-        Evolução — Percentual de Realização
-      </div>
-      <div className="mt-3.5 grid grid-cols-12 gap-1.5 items-end h-[150px]">
-        {baseData.map((m, i) => {
-          const pct = Math.round((m.realizado / m.previsto) * 100);
-          const barBg = pct >= 100 ? '#004e4c' : pct >= 50 ? '#1f8f78' : '#a9d68f';
-          return (
-            <div
-              key={i}
-              className="h-full flex flex-col justify-end items-center gap-1 group"
-            >
-              <div className="text-[10.5px] font-bold text-[#004e4c] leading-tight">
-                {pct}%
-              </div>
-              <div
-                className="w-full max-w-[30px] rounded-t-[3px] transition-all hover:opacity-90"
-                style={{ height: `${pct}%`, background: barBg }}
-                title={`${m.mesAno}: ${pct}% realizado (${m.realizado}/${m.previsto})`}
-              ></div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="grid grid-cols-12 gap-1.5 mt-2 border-t border-[#e4e8ee] pt-2">
-        {baseData.map((m, i) => (
-          <div key={i} className="text-center text-[10.5px] text-[#6b7684]">
-            {m.mesAno}
-          </div>
-        ))}
+    <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-3.5 sm:p-4 shadow-2xs h-full w-full flex flex-col justify-between overflow-hidden relative">
+      <div className="pb-2 border-b border-[#f0f3f7] shrink-0">
+        <div className="text-[13.5px] sm:text-[14.5px] font-bold text-[#004e4c] truncate">
+          Evolução — Percentual de Realização
+        </div>
       </div>
 
-      {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} />}
+      <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden my-1">
+        <UniversalChartRenderer
+          data={dataPercentual}
+          chartType={chartType}
+          unit="%"
+          legendPrimary="% Realizado"
+          primaryColor="#004e4c"
+        />
+      </div>
+
+      {/* Card Footer: Tipo de gráfico + Ver Detalhes */}
+      <div className="pt-2 border-t border-[#f0f3f7] flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <ChartTypeSelector
+          currentType={chartType}
+          onChangeType={setChartType}
+          direction="up"
+        />
+        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} className="mt-0" />}
+      </div>
     </div>
   );
 };

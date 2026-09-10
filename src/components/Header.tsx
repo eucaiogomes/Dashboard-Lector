@@ -68,8 +68,8 @@ export const Header: React.FC<HeaderProps> = () => {
       <div className="relative h-[135px] sm:h-[170px] md:h-[200px] lg:h-[230px] w-full flex items-center justify-center overflow-hidden border-b border-[#001312] bg-[#013330]">
         {/* Banner Background Image */}
         <img
-          src="/banner-custom.jpg"
-          alt="Banner Lector"
+          src="/banner-unimed.png"
+          alt="Banner Unimed"
           className="w-full h-full object-cover object-center z-0"
         />
 

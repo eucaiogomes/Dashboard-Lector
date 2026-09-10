@@ -32,7 +32,7 @@ export default function App() {
         <Sidebar activeItem={sidebarItem} onSelectItem={item => setSidebarItem(item)} />
 
         {/* Center/Right Dynamic Body */}
-        <main className="flex-1 min-w-0 pb-6">
+        <main className="flex-1 min-w-0 pb-24 lg:pb-36">
           {sidebarItem === 'Dashboard' ? (
             <DashboardView focusViewRequest={dashboardFocusRequest} />
           ) : (

@@ -101,12 +101,6 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                             }}
                             className="h-3 rounded-xs bg-[#cde3bb] group relative overflow-hidden"
                           >
-                            <motion.div
-                              initial={{ x: '-100%' }}
-                              animate={isInView ? { x: '200%' } : {}}
-                              transition={{ delay: 0.9 + idx * 0.1, duration: 0.6 }}
-                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                            />
                             <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0 bg-[#4a5462] text-white text-[9.5px] px-1 py-0.5 rounded pointer-events-none whitespace-nowrap z-20">
                               Previsto: {item.valueSecondary} {card.unit || ''}
                             </span>
@@ -123,12 +117,6 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                             className="h-4 rounded-xs shadow-2xs group relative overflow-hidden"
                             style={{ backgroundColor: item.color || '#004e4c' }}
                           >
-                            <motion.div
-                              initial={{ x: '-100%' }}
-                              animate={isInView ? { x: '200%' } : {}}
-                              transition={{ delay: 1.0 + idx * 0.1, duration: 0.6 }}
-                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                            />
                             <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0 bg-[#004e4c] text-white text-[9.5px] px-1 py-0.5 rounded pointer-events-none whitespace-nowrap z-20">
                               Realizado: {item.value} {card.unit || ''}
                             </span>
@@ -146,12 +134,6 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                           className="h-6 rounded-[2px] shadow-2xs group relative flex items-center justify-end pr-1.5 overflow-hidden"
                           style={{ backgroundColor: item.color || '#004e4c' }}
                         >
-                          <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={isInView ? { x: '200%' } : {}}
-                            transition={{ delay: 0.8 + idx * 0.1, duration: 0.6 }}
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          />
                           {widthPct > 20 && (
                             <motion.span
                               initial={{ opacity: 0 }}
@@ -246,14 +228,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       }}
                       className="w-1/2 max-w-[14px] bg-[#cde3bb] rounded-t-[2px] hover:opacity-80 relative overflow-hidden"
                       title={`Previsto: ${item.valueSecondary}`}
-                    >
-                      <motion.div
-                        initial={{ y: '100%' }}
-                        animate={isInView ? { y: '-100%' } : {}}
-                        transition={{ delay: 0.8 + idx * 0.08, duration: 0.5 }}
-                        className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-transparent"
-                      />
-                    </motion.div>
+                    />
                   )}
                   <motion.div
                     initial={{ height: 0 }}
@@ -266,14 +241,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                     className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[2px] hover:opacity-90 shadow-2xs relative overflow-hidden`}
                     style={{ backgroundColor: item.color || '#004e4c' }}
                     title={`${item.label}: ${item.value}`}
-                  >
-                    <motion.div
-                      initial={{ y: '100%' }}
-                      animate={isInView ? { y: '-100%' } : {}}
-                      transition={{ delay: 0.9 + idx * 0.08, duration: 0.5 }}
-                      className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent"
-                    />
-                  </motion.div>
+                  />
                 </div>
 
                 <motion.span
@@ -296,10 +264,12 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
   // 3. Line Chart
   if (chartType === 'Linha') {
     const gradientId = useUniqueId('lineGrad');
+    const hasSecondary = data.some(d => d.valueSecondary !== undefined);
     const totalPoints = data.length;
-    const values = data.map(d => d.value);
-    const minVal = Math.min(...values);
-    const maxVal = Math.max(...values, maxScale);
+    const valuesPrimary = data.map(d => d.value);
+    const valuesSecondary = data.map(d => d.valueSecondary ?? 0);
+    const minVal = Math.min(...valuesPrimary, ...valuesSecondary, 0);
+    const maxVal = Math.max(...valuesPrimary, ...valuesSecondary, maxScale);
     const range = maxVal - minVal || 1;
 
     // SVG coordinates
@@ -314,20 +284,44 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
       return { x, y, ...d };
     });
 
+    const pointsSecondary = hasSecondary
+      ? data.map((d, idx) => {
+          const sec = d.valueSecondary ?? 0;
+          const x = paddingX + (idx / (totalPoints - 1 || 1)) * (width - paddingX * 2);
+          const y = height - paddingY - ((sec - minVal) / range) * (height - paddingY * 2);
+          return { x, y, value: sec, label: d.label };
+        })
+      : [];
+
     const pathD = points.reduce((acc, p, idx) => {
       return idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`;
     }, '');
 
-    // Calculate approximate path length for stroke animation
-    let pathLength = 0;
-    for (let i = 1; i < points.length; i++) {
-      const dx = points[i].x - points[i - 1].x;
-      const dy = points[i].y - points[i - 1].y;
-      pathLength += Math.sqrt(dx * dx + dy * dy);
-    }
+    const pathSecondary = hasSecondary
+      ? pointsSecondary.reduce((acc, p, idx) => {
+          return idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`;
+        }, '')
+      : '';
 
     return (
       <div ref={containerRef} className="w-full h-full py-2 flex flex-col justify-between">
+        {hasSecondary && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-end gap-4 text-[11px] text-[#6b7684] mb-1 pr-2 shrink-0"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-[#84cc16]"></span>
+              <span>{meta?.legendSecondary || 'Previsto'}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-[#004e4c]"></span>
+              <span>{meta?.legendPrimary || 'Realizado'}</span>
+            </div>
+          </motion.div>
+        )}
         <div className="relative w-full flex-1 min-h-[100px] flex items-center justify-center">
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
             {/* Grid horizontal lines */}
@@ -365,6 +359,24 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
               transition={{ delay: 1.0, duration: 0.6 }}
             />
 
+            {/* Secondary line if available */}
+            {hasSecondary && pathSecondary && (
+              <motion.path
+                d={pathSecondary}
+                fill="none"
+                stroke="#84cc16"
+                strokeWidth="2"
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={isInView ? { pathLength: 1, opacity: 1 } : {}}
+                transition={{
+                  pathLength: { delay: 0.2, duration: 0.9, ease: 'easeInOut' },
+                  opacity: { delay: 0.2, duration: 0.1 }
+                }}
+              />
+            )}
+
             {/* Line Path — draws itself */}
             <motion.path
               d={pathD}
@@ -380,6 +392,29 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                 opacity: { delay: 0.3, duration: 0.1 }
               }}
             />
+
+            {/* Secondary Points */}
+            {hasSecondary &&
+              pointsSecondary.map((p, idx) => (
+                <g key={`sec-${idx}`} className="group cursor-pointer">
+                  <motion.circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="4"
+                    fill="#84cc16"
+                    stroke="#ffffff"
+                    strokeWidth="1.5"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={isInView ? { scale: 1, opacity: 1 } : {}}
+                    transition={{
+                      delay: 0.4 + idx * 0.1,
+                      duration: 0.3,
+                      type: 'spring'
+                    }}
+                  />
+                  <title>{`${p.label} — ${meta?.legendSecondary || 'Previsto'}: ${p.value}`}</title>
+                </g>
+              ))}
 
             {/* Points & Values */}
             {points.map((p, idx) => (

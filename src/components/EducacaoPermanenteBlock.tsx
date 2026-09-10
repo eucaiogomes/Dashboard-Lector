@@ -18,10 +18,10 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
     educacaoPermanenteData.find(d => d.setor === selectedSetor) ?? educacaoPermanenteData[0];
 
   return (
-    <div className="bg-white border border-[#e4e8ee] rounded-[6px] shadow-2xs overflow-hidden">
+    <div className="bg-white border border-[#e4e8ee] rounded-[6px] shadow-2xs overflow-hidden h-full flex flex-col justify-between">
       {/* Header bar */}
-      <div className="bg-[#004e4c] px-5 py-3 flex items-center justify-between gap-3">
-        <h2 className="text-[13.5px] font-bold text-[#eef7f4] uppercase tracking-wide">
+      <div className="bg-[#004e4c] px-5 py-3 flex items-center justify-between gap-3 shrink-0 cursor-grab active:cursor-grabbing select-none">
+        <h2 className="text-[13.5px] font-bold text-[#eef7f4] uppercase tracking-wide pointer-events-none select-none">
           Relatório de Educação Permanente
         </h2>
 
@@ -44,10 +44,10 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col justify-between">
         {/* Setor / Supervisor + período */}
-        <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-[#e4e8ee]">
-          <div className="text-[12.5px] text-[#334155] leading-relaxed">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#e4e8ee]">
+          <div className="text-[12.5px] text-[#334155] leading-relaxed flex flex-wrap items-center gap-x-6 gap-y-1">
             <div>
               <span className="font-bold text-[#004e4c]">Setor:</span> {r.setor}
             </div>
@@ -61,28 +61,30 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
         </div>
 
         {/* Categoria / Tema / Instrutores */}
-        <div className="flex flex-col items-center text-center gap-2 py-4 border-b border-[#e4e8ee]">
-          <span className="bg-[#f47920] text-white text-[11px] font-bold uppercase tracking-wide px-4 py-1 rounded-full">
+        <div className="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-[#e4e8ee]">
+          <span className="bg-[#f47920] text-white text-[11px] font-bold uppercase tracking-wide px-4 py-1 rounded-full shrink-0">
             {r.categoria}
           </span>
-          <div className="text-[13px] text-[#334155]">
-            <span className="font-bold text-[#004e4c]">Tema:</span> {r.tema}
-          </div>
-          <div className="text-[13px] text-[#334155]">
-            <span className="font-bold text-[#004e4c]">Instrutores:</span> {r.instrutores}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-[#334155]">
+            <div>
+              <span className="font-bold text-[#004e4c]">Tema:</span> {r.tema}
+            </div>
+            <div>
+              <span className="font-bold text-[#004e4c]">Instrutores:</span> {r.instrutores}
+            </div>
           </div>
         </div>
 
-        {/* 2x2 stat grid */}
-        <div className="grid grid-cols-2 gap-3 pt-4">
+        {/* Responsive KPI Grid: 4 columns when wide, 2 columns when narrow */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 flex-1 items-center">
           {/* Colaboradores */}
-          <div className="flex flex-col items-center text-center gap-2.5">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10.5px] font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+          <div className="flex flex-col items-center text-center gap-2 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
+            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
               Colaboradores
             </span>
             <div className="flex items-center gap-2.5">
-              <i className="icon-participants text-[26px] text-[#004e4c]"></i>
-              <div className="text-left text-[12.5px] text-[#334155] leading-snug">
+              <i className="icon-participants text-[24px] text-[#004e4c]"></i>
+              <div className="text-left text-[12px] text-[#334155] leading-snug">
                 <div>
                   Elegíveis: <span className="font-bold text-[#004e4c]">{r.colaboradoresElegiveis}</span>
                 </div>
@@ -94,28 +96,28 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
           </div>
 
           {/* Adesão Mensal */}
-          <div className="flex flex-col items-center text-center gap-2.5">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10.5px] font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+          <div className="flex flex-col items-center text-center gap-1.5 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
+            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
               Adesão Mensal
             </span>
             <div>
-              <div className="text-[30px] font-extrabold text-[#004e4c] leading-none">
+              <div className="text-[26px] font-extrabold text-[#004e4c] leading-none">
                 {r.adesaoMensalPct}%
               </div>
-              <div className="text-[10.5px] italic font-semibold text-[#c07a10] mt-1">
+              <div className="text-[10px] italic font-semibold text-[#c07a10] mt-0.5">
                 Meta {r.adesaoMetaPct}%
               </div>
             </div>
           </div>
 
           {/* Quantidade de Turmas */}
-          <div className="flex flex-col items-center text-center gap-2.5">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10.5px] font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+          <div className="flex flex-col items-center text-center gap-2 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
+            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
               Quantidade de Turmas
             </span>
             <div className="flex items-center gap-2.5">
-              <i className="icon-presential-lesson text-[26px] text-[#004e4c]"></i>
-              <div className="text-left text-[12.5px] text-[#334155] leading-snug">
+              <i className="icon-presential-lesson text-[24px] text-[#004e4c]"></i>
+              <div className="text-left text-[12px] text-[#334155] leading-snug">
                 <div>
                   Planejadas: <span className="font-bold text-[#004e4c]">{String(r.turmasPlanejadas).padStart(2, '0')}</span>
                 </div>
@@ -127,22 +129,22 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
           </div>
 
           {/* Esforço Extra */}
-          <div className="flex flex-col items-center text-center gap-2.5">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10.5px] font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+          <div className="flex flex-col items-center text-center gap-1.5 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
+            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
               Esforço Extra
             </span>
             <div>
-              <div className="text-[30px] font-extrabold text-[#004e4c] leading-none">
+              <div className="text-[26px] font-extrabold text-[#004e4c] leading-none">
                 {r.esforcoExtraPct}%
               </div>
-              <p className="text-[9.5px] italic text-[#8a93a0] mt-1 max-w-[150px] leading-tight">
-                Toda turma realizada além do planejamento habitual. Quanto menor, melhor.
+              <p className="text-[9px] italic text-[#8a93a0] mt-0.5 max-w-[140px] leading-tight">
+                Além do planejamento habitual
               </p>
             </div>
           </div>
         </div>
 
-        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} className="mt-5" />}
+        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} className="mt-2" />}
       </div>
     </div>
   );

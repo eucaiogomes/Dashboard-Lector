@@ -1,58 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { InternalTraining } from '../types';
 import { internalTrainingsData } from '../data/mockData';
 import { VerDetalhesButton } from './VerDetalhesButton';
+import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
+import { UniversalChartRenderer } from './UniversalChartRenderer';
 
 interface TreinamentosRankingBlockProps {
+  treinamentosData?: InternalTraining[];
   onVerDetalhes?: () => void;
 }
 
-/**
- * Exact copy of the "Treinamentos" (horas por treinamento interno) card from InternosView
- * (Indicadores T&D → Treinamentos Internos) — same markup and logic, unchanged, just
- * relocated so it can be added as a single widget on the Dashboard.
- */
-export const TreinamentosRankingBlock: React.FC<TreinamentosRankingBlockProps> = ({ onVerDetalhes }) => {
-  const treinamentosData = internalTrainingsData;
-  const maxHours = 2799;
+export const TreinamentosRankingBlock: React.FC<TreinamentosRankingBlockProps> = ({
+  treinamentosData = internalTrainingsData,
+  onVerDetalhes
+}) => {
+  const [chartType, setChartType] = useState<ChartTypeOption>('Barra');
+
+  const dataPoints = treinamentosData.map(t => ({
+    label: t.nome,
+    value: t.horasVal,
+    extra: t.horasFormatted
+  }));
 
   return (
-    <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-4 px-4.5 pb-3.5 shadow-2xs">
-      <div className="text-[15px] font-bold text-[#004e4c]">
-        Treinamentos
-      </div>
-      <div className="text-[12.5px] text-[#8a93a0] mt-0.5 font-medium">
-        Horas treinadas por treinamento interno
-      </div>
-
-      <div className="mt-3.5 flex flex-col gap-2.5">
-        {treinamentosData.map((t, i) => {
-          const widthPct = (t.horasVal / maxHours) * 100;
-          return (
-            <div
-              key={i}
-              className="grid grid-cols-[minmax(96px,152px)_minmax(50px,1fr)_auto] gap-2.5 items-center"
-            >
-              <div
-                className="text-[12.5px] text-[#004e4c] font-medium truncate"
-                title={t.nome}
-              >
-                {t.nome}
-              </div>
-              <div className="h-4 bg-[#f4f6f9] rounded-[3px] overflow-hidden">
-                <div
-                  className="h-4 bg-[#004e4c] rounded-[3px] transition-all hover:bg-[#00706c]"
-                  style={{ width: `${widthPct}%` }}
-                ></div>
-              </div>
-              <div className="text-xs text-[#6b7684] whitespace-nowrap font-mono font-medium">
-                {t.horasFormatted}
-              </div>
-            </div>
-          );
-        })}
+    <div className="bg-white border border-[#e4e8ee] rounded-[6px] p-3.5 sm:p-4 shadow-2xs h-full w-full flex flex-col justify-between overflow-hidden relative">
+      <div className="shrink-0 pb-1.5 border-b border-[#f0f3f7]">
+        <div className="text-[13.5px] sm:text-[14.5px] font-bold text-[#004e4c] truncate">
+          Treinamentos
+        </div>
+        <div className="text-[10.5px] text-[#8a93a0] font-medium truncate">
+          Horas treinadas por treinamento interno
+        </div>
       </div>
 
-      {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} />}
+      <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden my-1">
+        <UniversalChartRenderer
+          data={dataPoints}
+          chartType={chartType}
+          unit="h"
+          legendPrimary="Horas Treinadas"
+          primaryColor="#004e4c"
+        />
+      </div>
+
+      {/* Card Footer: Tipo de gráfico + Ver Detalhes */}
+      <div className="shrink-0 pt-2 border-t border-[#f0f3f7] flex flex-wrap items-center justify-between gap-2">
+        <ChartTypeSelector
+          currentType={chartType}
+          onChangeType={setChartType}
+          direction="up"
+        />
+        {onVerDetalhes && <VerDetalhesButton onClick={onVerDetalhes} className="mt-0" />}
+      </div>
     </div>
   );
 };
