@@ -44,32 +44,28 @@ export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ 
     [dateFilter]
   );
 
-  const turmasStats = useMemo(() => {
-    const sumPlan = simulatedData.costCenterRowsData.reduce((acc, r) => acc + r.turmasPlanejadas, 0);
-    const sumExc = simulatedData.costCenterRowsData.reduce((acc, r) => acc + r.turmasExcedentes, 0);
-    return {
-      planejadas: sumPlan > 0 ? sumPlan * 18 : 414,
-      excedentes: sumExc > 0 ? sumExc * 3 : 18
-    };
-  }, [simulatedData]);
-
-  const esforcoPct =
-    turmasStats.planejadas > 0
-      ? ((turmasStats.excedentes / turmasStats.planejadas) * 100).toFixed(1).replace('.', ',')
-      : '4,3';
-
   return (
-    <div className="h-full w-full flex flex-col gap-3 select-none @container">
-      {/* 5 KPIs — cada um é seu próprio card (fundo branco, sombra e borda superior verde),
-          em vez de uma faixa de blocos dentro de um único card agrupador. As colunas e o
-          tamanho do texto respondem à largura do próprio widget (container query), não à
-          largura da janela — assim ele continua legível quando o card é redimensionado
-          para menor no grid do Dashboard, em vez de truncar os rótulos. */}
+    <div className="h-full w-full bg-white border border-[#e4e8ee] rounded-2xl shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] p-4 @[420px]:p-5 flex flex-col gap-4 select-none @container overflow-hidden">
+      {/* Cabeçalho do widget */}
+      <div className="pb-4 border-b border-[#f0f3f7] shrink-0">
+        <h2 className="text-[15px] font-bold text-[#004e4c] tracking-tight truncate">
+          Resumo Geral de Treinamentos Institucionais (KPIs)
+        </h2>
+        <p className="text-[11px] text-[#6b7684] font-medium truncate">
+          Previsto, agendado, realizado, pendente, adesão e turmas
+        </p>
+      </div>
+
+      {/* 5 KPIs — seções internas da mesma caixa, sem sombra/elevação própria: nada aqui
+          "flutua" separado, é tudo uma única superfície. As colunas e o tamanho do texto
+          respondem à largura do próprio widget (container query), não à largura da janela —
+          assim ele continua legível quando o card é redimensionado para menor no grid do
+          Dashboard, em vez de truncar os rótulos. */}
       <div className="flex-1 min-h-0 grid grid-cols-2 @[360px]:grid-cols-3 @[520px]:grid-cols-4 @[680px]:grid-cols-5 gap-3">
         {simulatedData.kpis.map((kpi, index) => (
           <div
             key={index}
-            className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 @[420px]:p-4 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5 min-w-0"
+            className="bg-[#f8fafc] border border-[#e4e8ee] rounded-xl p-3.5 @[420px]:p-4 flex flex-col justify-center gap-1.5 min-w-0"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 @[420px]:w-9 @[420px]:h-9 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
@@ -94,45 +90,6 @@ export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ 
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Turmas planejadas x excedentes — também seu próprio card */}
-      <div className="bg-white border border-[#e4e8ee] rounded-2xl p-4 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] flex flex-wrap items-center justify-between gap-4 shrink-0">
-        <div>
-          <div className="text-[14px] font-bold text-[#004e4c]">
-            Turmas planejadas x excedentes
-          </div>
-          <div className="text-[12px] text-[#8a93a0]">
-            Acompanhamento de esforço operacional e turmas extraordinárias
-          </div>
-        </div>
-
-        <div className="flex items-center gap-7 text-right">
-          <div>
-            <div className="text-[22px] font-bold text-[#004e4c] leading-tight">
-              {turmasStats.planejadas}
-            </div>
-            <div className="text-[11.5px] text-[#8a93a0] font-medium">
-              Planejadas
-            </div>
-          </div>
-          <div>
-            <div className="text-[22px] font-bold text-[#00995d] leading-tight">
-              {turmasStats.excedentes}
-            </div>
-            <div className="text-[11.5px] text-[#8a93a0] font-medium">
-              Excedentes
-            </div>
-          </div>
-          <div>
-            <div className="text-[22px] font-bold text-[#00995d] leading-tight">
-              {esforcoPct}%
-            </div>
-            <div className="text-[11.5px] text-[#8a93a0] font-medium">
-              Esforço extra
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

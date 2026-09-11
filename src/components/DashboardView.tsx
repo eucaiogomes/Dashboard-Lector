@@ -22,6 +22,7 @@ import { TurmasExecucaoDonutBlock } from './TurmasExecucaoDonutBlock';
 import { EducacaoPermanenteBlock } from './EducacaoPermanenteBlock';
 import { InstitucionaisKpiBlock } from './InstitucionaisKpiBlock';
 import { InternosKpiBlock } from './InternosKpiBlock';
+import { TurmasPlanejadasExcedentesBlock } from './TurmasPlanejadasExcedentesBlock';
 import { AddChartModal } from './AddChartModal';
 import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
@@ -40,6 +41,7 @@ import {
   customMinSizeForCardId,
   loadStoredLayout,
   reconcileLayout,
+  resolveOverlaps,
   saveStoredLayout,
   clearStoredLayout,
   loadStoredPanels,
@@ -71,7 +73,8 @@ const SPECIAL_WIDGETS: Record<string, React.FC<SpecialWidgetProps>> = {
   [SPECIAL_WIDGET_IDS.internosRankingCargo]: RankingCargoBlock,
   [SPECIAL_WIDGET_IDS.centroCustoTabela]: CentroCustoTableBlock,
   [SPECIAL_WIDGET_IDS.turmasExecucao]: TurmasExecucaoDonutBlock,
-  [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock,
+  [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: TurmasPlanejadasExcedentesBlock
 };
 
 type LayoutSpec = { catalogId: string; x: number; y: number; w: number; h: number };
@@ -266,7 +269,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         name: meta.name,
         templateId: PANEL_TEMPLATES.find(t => t.id === meta.templateId)?.id,
         cards: panelCards,
-        layout: verticalCompactor.compact(panelLayout, GRID_COLS)
+        // resolveOverlaps antes de compactar: cura sobreposições genuínas que uma sessão
+        // anterior a uma correção no algoritmo de posicionamento possa ter salvo.
+        layout: verticalCompactor.compact(resolveOverlaps(panelLayout), GRID_COLS)
       };
     });
   });
@@ -306,7 +311,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   // Automatically separate any overlapping cards from previous sessions
   useEffect(() => {
     if (layout.length > 0) {
-      const compacted = verticalCompactor.compact(layout, GRID_COLS);
+      const compacted = verticalCompactor.compact(resolveOverlaps(layout), GRID_COLS);
       const hasCollision = compacted.some(item => {
         const orig = layout.find(l => l.i === item.i);
         return orig && (orig.x !== item.x || orig.y !== item.y);
@@ -668,7 +673,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             card.chartType === 'Tabela' ? 'overflow-auto' : 'overflow-hidden'
           }`}
         >
-          <DashboardChartRenderer card={card} />
+          {/* key força remount ao trocar o tipo do gráfico — sem isso, o mesmo container
+              ref/observer de entrada em viewport (useInView) fica "grudado" no estado do
+              tipo anterior e a animação de entrada do novo tipo nunca dispara. */}
+          <DashboardChartRenderer key={card.chartType} card={card} />
         </div>
 
         {/* Card Footer / Chart Type Selector & Detailed Indicators CTA */}

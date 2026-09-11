@@ -13,26 +13,48 @@ export const MIN_H = 5;
 export const MAX_W = GRID_COLS;
 export const MAX_H = 20;
 
-// Default size for a newly added card: a third of the row (3 charts per line) rather than
-// half — half-width defaults meant every new chart landed in a fixed 2-per-row arrangement,
-// leaving the rest of the row empty until someone manually resized/repositioned it.
-export const DEFAULT_COLS_PER_ROW = 3;
-export const DEFAULT_W = GRID_COLS / DEFAULT_COLS_PER_ROW;
-export const DEFAULT_H = 8;
+// Um único gráfico selecionado nasce largura total + altura mínima — o usuário aumenta
+// manualmente se quiser um card maior. Quando VÁRIOS são selecionados de uma vez, em vez
+// disso eles nascem lado a lado, 3 por linha (comportamento antigo), senão a tela vira uma
+// coluna única enorme.
+export const BATCH_COLS_PER_ROW = 3;
+export const BATCH_DEFAULT_W = GRID_COLS / BATCH_COLS_PER_ROW;
+export const BATCH_DEFAULT_H = 8;
 
-// As faixas de KPI ("Resumo Geral") nascem largura total + baixas — mesmo tamanho já usado
-// nos painéis-modelo (TEMPLATE_LAYOUT_SPECS) — em vez do tamanho genérico de 1/3 da linha,
-// que deixava esses cards estreitos, altos e com muita área em branco.
-const CUSTOM_DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
-  [SPECIAL_WIDGET_IDS.institucionaisKpis]: { w: GRID_COLS, h: 6 },
-  [SPECIAL_WIDGET_IDS.internosKpis]: { w: GRID_COLS, h: 6 }
+// Alturas de nascimento por widget — reaproveita os mesmos valores já calibrados nos
+// painéis-modelo (TEMPLATE_LAYOUT_SPECS, em DashboardView.tsx): uma altura mínima genérica
+// não faz sentido pra widgets ricos (abas, tabela, agenda), que precisam de mais espaço.
+const CUSTOM_DEFAULT_HEIGHT: Record<string, number> = {
+  [SPECIAL_WIDGET_IDS.institucionaisKpis]: 6,
+  [SPECIAL_WIDGET_IDS.internosKpis]: 6,
+  [SPECIAL_WIDGET_IDS.institucionaisTabs]: 12,
+  [SPECIAL_WIDGET_IDS.institucionaisPercentual]: 6,
+  [SPECIAL_WIDGET_IDS.institucionaisAgenda]: 6,
+  [SPECIAL_WIDGET_IDS.internosEvolucao]: 12,
+  [SPECIAL_WIDGET_IDS.internosAtivosTreinados]: 6,
+  [SPECIAL_WIDGET_IDS.internosTreinamentosHoras]: 6,
+  [SPECIAL_WIDGET_IDS.internosRankingCargo]: 12,
+  [SPECIAL_WIDGET_IDS.centroCustoTabela]: 9,
+  [SPECIAL_WIDGET_IDS.turmasExecucao]: 8,
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: 11,
+  [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: 2
 };
 
-// Piso de redimensionamento dessas faixas — mais frouxo que o tamanho de nascimento acima,
-// só o suficiente para não voltar a ficar estreito/truncado como antes.
+// Estes sempre nascem em largura total, mesmo dentro de uma seleção em lote — divididos
+// em 3-por-linha eles ficam estreitos demais para o conteúdo (faixa de KPI, tabela).
+const ALWAYS_FULL_WIDTH = new Set<string>([
+  SPECIAL_WIDGET_IDS.institucionaisKpis,
+  SPECIAL_WIDGET_IDS.internosKpis,
+  SPECIAL_WIDGET_IDS.centroCustoTabela,
+  SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes
+]);
+
+// Piso de redimensionamento das faixas de KPI — mais frouxo que o tamanho de nascimento
+// acima, só o suficiente para não voltar a ficar estreito/truncado como antes.
 const CUSTOM_MIN_SIZE: Record<string, { w: number; h: number }> = {
   [SPECIAL_WIDGET_IDS.institucionaisKpis]: { w: 6, h: 5 },
-  [SPECIAL_WIDGET_IDS.internosKpis]: { w: 6, h: 5 }
+  [SPECIAL_WIDGET_IDS.internosKpis]: { w: 6, h: 5 },
+  [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: { w: 6, h: 2 }
 };
 
 // Card ids are `card_${catalogId}_${timestamp}_${idx}` (from "Adicionar Gráfico") or
@@ -42,18 +64,25 @@ const CUSTOM_MIN_SIZE: Record<string, { w: number; h: number }> = {
 const matchCatalogId = (cardId: string, catalogId: string): boolean =>
   cardId === catalogId || cardId.startsWith(`card_${catalogId}_`) || cardId === `card_${catalogId}`;
 
-export const customSizeForCardId = (cardId: string): { w: number; h: number } | undefined => {
-  for (const catalogId of Object.keys(CUSTOM_DEFAULT_SIZE)) {
-    if (matchCatalogId(cardId, catalogId)) return CUSTOM_DEFAULT_SIZE[catalogId];
+const findByCatalogId = <T,>(cardId: string, map: Record<string, T>): T | undefined => {
+  for (const catalogId of Object.keys(map)) {
+    if (matchCatalogId(cardId, catalogId)) return map[catalogId];
   }
   return undefined;
 };
 
-export const customMinSizeForCardId = (cardId: string): { w: number; h: number } | undefined => {
-  for (const catalogId of Object.keys(CUSTOM_MIN_SIZE)) {
-    if (matchCatalogId(cardId, catalogId)) return CUSTOM_MIN_SIZE[catalogId];
+export const customHeightForCardId = (cardId: string): number | undefined =>
+  findByCatalogId(cardId, CUSTOM_DEFAULT_HEIGHT);
+
+export const isAlwaysFullWidthCardId = (cardId: string): boolean => {
+  for (const catalogId of ALWAYS_FULL_WIDTH) {
+    if (matchCatalogId(cardId, catalogId)) return true;
   }
-  return undefined;
+  return false;
+};
+
+export const customMinSizeForCardId = (cardId: string): { w: number; h: number } | undefined => {
+  return findByCatalogId(cardId, CUSTOM_MIN_SIZE);
 };
 
 const STORAGE_KEY = 'lector_dashboard_layout_v1';
@@ -210,10 +239,10 @@ export function buildDefaultLayout(cardIds: string[]): LayoutItem[] {
   return cardIds.map((id, index) =>
     withLimits({
       i: id,
-      x: (index % DEFAULT_COLS_PER_ROW) * DEFAULT_W,
-      y: Math.floor(index / DEFAULT_COLS_PER_ROW) * DEFAULT_H,
-      w: DEFAULT_W,
-      h: DEFAULT_H
+      x: (index % BATCH_COLS_PER_ROW) * BATCH_DEFAULT_W,
+      y: Math.floor(index / BATCH_COLS_PER_ROW) * BATCH_DEFAULT_H,
+      w: BATCH_DEFAULT_W,
+      h: customHeightForCardId(id) ?? BATCH_DEFAULT_H
     })
   );
 }
@@ -222,6 +251,11 @@ export function buildDefaultLayout(cardIds: string[]): LayoutItem[] {
  * Keeps a layout in sync with the current set of cards: drops entries for removed
  * cards and appends a default-sized slot (placed below existing content) for new ones.
  * Existing positions/sizes for cards that are still present are left untouched.
+ *
+ * Selecionar um único gráfico no catálogo nasce em largura total + altura mínima (ou a
+ * altura própria do widget, se ele tiver uma — ver CUSTOM_DEFAULT_HEIGHT). Selecionar
+ * VÁRIOS de uma vez nasce lado a lado, 3 por linha, como antes — largura total pra cada um
+ * empilharia a tela inteira numa coluna só.
  */
 export function reconcileLayout(currentLayout: LayoutItem[], cardIds: string[]): LayoutItem[] {
   const cardIdSet = new Set(cardIds);
@@ -231,42 +265,80 @@ export function reconcileLayout(currentLayout: LayoutItem[], cardIds: string[]):
 
   if (missingIds.length === 0) return kept;
 
+  const isBatch = missingIds.length > 1;
+  const rowW = isBatch ? BATCH_DEFAULT_W : GRID_COLS;
+  const rowH = isBatch ? BATCH_DEFAULT_H : MIN_H;
+  const colsPerRow = isBatch ? BATCH_COLS_PER_ROW : 1;
+
   const bottomY = kept.reduce((max, item) => Math.max(max, item.y + item.h), 0);
 
-  // Charts are added one at a time (the catalog modal calls this once per selection), so a
-  // naive "index within this call" always resets to 0 — every card would start its own row
-  // instead of filling the current one. Instead, look at whatever auto-placed row is already
-  // trailing at the bottom and keep filling it until it reaches DEFAULT_COLS_PER_ROW.
-  const trailingRowY = bottomY - DEFAULT_H;
+  // A continuidade de linha parcial (completar uma linha de 3 já existente) só faz sentido
+  // no modo "lote" — no modo solo cada card já fecha sua própria linha (largura total).
+  const trailingRowY = bottomY - BATCH_DEFAULT_H;
   const trailingRowSlots = kept.filter(
-    item => item.y === trailingRowY && item.w === DEFAULT_W && item.h === DEFAULT_H
+    item => item.y === trailingRowY && item.w === BATCH_DEFAULT_W && item.h === BATCH_DEFAULT_H
   ).length;
-  let slot = trailingRowSlots > 0 && trailingRowSlots < DEFAULT_COLS_PER_ROW ? trailingRowSlots : 0;
+  let slot = isBatch && trailingRowSlots > 0 && trailingRowSlots < BATCH_COLS_PER_ROW ? trailingRowSlots : 0;
   let startY = slot > 0 ? trailingRowY : bottomY;
 
   const added: LayoutItem[] = [];
 
   missingIds.forEach(id => {
-    const custom = customSizeForCardId(id);
-    if (custom) {
-      // Widgets com tamanho próprio (ex.: faixas de KPI) sempre começam sua própria linha,
-      // largura total — nunca dividem a linha com o layout genérico de 3-por-linha.
-      const y = slot > 0 ? startY + DEFAULT_H : startY;
-      added.push(withLimits({ i: id, x: 0, y, w: custom.w, h: custom.h }));
-      startY = y + custom.h;
+    const customH = customHeightForCardId(id);
+    const forceFullWidth = isAlwaysFullWidthCardId(id);
+
+    if (forceFullWidth) {
+      // Faixas de KPI/tabela sempre começam sua própria linha, largura total — nunca
+      // dividem a linha com o layout de 3-por-linha do lote.
+      const y = slot > 0 ? startY + BATCH_DEFAULT_H : startY;
+      const h = customH ?? BATCH_DEFAULT_H;
+      added.push(withLimits({ i: id, x: 0, y, w: GRID_COLS, h }));
+      startY = y + h;
       slot = 0;
       return;
     }
 
     added.push(withLimits({
       i: id,
-      x: (slot % DEFAULT_COLS_PER_ROW) * DEFAULT_W,
-      y: startY + Math.floor(slot / DEFAULT_COLS_PER_ROW) * DEFAULT_H,
-      w: DEFAULT_W,
-      h: DEFAULT_H
+      x: (slot % colsPerRow) * rowW,
+      y: startY + Math.floor(slot / colsPerRow) * rowH,
+      w: rowW,
+      h: customH ?? rowH
     }));
     slot += 1;
   });
 
   return [...kept, ...added];
+}
+
+const rectsOverlap = (a: LayoutItem, b: LayoutItem): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/**
+ * Corrige sobreposições genuínas entre cards — duas posições que ocupam o mesmo espaço no
+ * grid — sem mexer em quem já está corretamente posicionado. Diferente do compactor vertical
+ * (que só fecha buracos verticais assumindo que não há sobreposição de entrada), isto detecta
+ * colisão de retângulos de verdade: útil para curar layouts salvos de sessões anteriores a
+ * uma correção no algoritmo de posicionamento, sem descartar o arranjo manual do usuário.
+ * Processa por ordem de leitura (y, depois x) e empurra o item mais abaixo/à direita para
+ * baixo de quem colidiu primeiro, uma vez por item.
+ */
+export function resolveOverlaps(layout: LayoutItem[]): LayoutItem[] {
+  const sorted = [...layout].sort((a, b) => a.y - b.y || a.x - b.x);
+  const placed: LayoutItem[] = [];
+
+  sorted.forEach(item => {
+    let candidate = item;
+    let guard = 0;
+    // Reavalia contra todo mundo já posicionado até não colidir com nada — cada rodada só
+    // pode empurrar para baixo, então converge em no máximo `placed.length` iterações.
+    while (guard++ <= placed.length) {
+      const collision = placed.find(other => rectsOverlap(candidate, other));
+      if (!collision) break;
+      candidate = { ...candidate, y: collision.y + collision.h };
+    }
+    placed.push(candidate);
+  });
+
+  return placed;
 }

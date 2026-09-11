@@ -109,7 +109,8 @@ export const SPECIAL_WIDGET_IDS = {
   internosRankingCargo: 'internos_ranking_cargo',
   centroCustoTabela: 'centro_custo_tabela',
   turmasExecucao: 'turmas_execucao_periodo',
-  educacaoPermanente: 'educacao_permanente'
+  educacaoPermanente: 'educacao_permanente',
+  turmasPlanejadasExcedentes: 'turmas_planejadas_excedentes'
 } as const;
 
 /** Stub generateData shared by every special widget — their real data/rendering lives in
@@ -138,6 +139,20 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     group: 'ted_indicadores',
     icon: 'icon-performance',
     description: 'Faixa de KPIs com Total de Treinamentos, Participantes, Colaboradores Treinados, Horas Treinadas e Turmas Planejadas x Excedentes.',
+    defaultType: 'Tabela',
+    allowedTypes: ['Tabela'],
+    isClientWidget: true,
+    generateData: specialWidgetStub
+  },
+  // Turmas planejadas x excedentes (faixa isolada, mesmos números que já saíam
+  // embutidos nos dois Resumos Gerais acima)
+  {
+    id: SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes,
+    title: 'Turmas planejadas x excedentes',
+    subtitle: 'Acompanhamento de esforço operacional e turmas extraordinárias',
+    group: 'ted_indicadores',
+    icon: 'icon-presential-lesson',
+    description: 'Turmas planejadas, turmas excedentes e o percentual de esforço extra sobre o planejado.',
     defaultType: 'Tabela',
     allowedTypes: ['Tabela'],
     isClientWidget: true,

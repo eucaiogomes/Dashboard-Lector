@@ -19,7 +19,6 @@ interface UniversalChartRendererProps {
   primaryColor?: string;
   secondaryColor?: string;
   heightPx?: number;
-  showValuesOnBars?: boolean;
 }
 
 const PALETTE = [
@@ -64,8 +63,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
   legendPrimary = 'Realizado',
   legendSecondary = 'Previsto',
   primaryColor = '#004e4c',
-  secondaryColor = '#cde3bb',
-  showValuesOnBars = true
+  secondaryColor = '#cde3bb'
 }) => {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const areaGradientId = useId();
@@ -118,13 +116,6 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
 
                 return (
                   <div key={`${item.label}-${idx}`} className="flex flex-col items-center justify-end h-full flex-1 max-w-[42px] group">
-                    {showValuesOnBars && (
-                      <span className="text-[9px] font-bold text-[#004e4c] mb-0.5 tabular-nums leading-none opacity-80 group-hover:opacity-100 transition-opacity">
-                        {formatVal(item.value)}
-                        {unit === '%' ? '%' : ''}
-                      </span>
-                    )}
-
                     <div className="w-full flex items-end justify-center gap-0.5 flex-1 min-h-0">
                       {item.valueSecondary !== undefined && (
                         <div
@@ -574,7 +565,8 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
     const maxSliceValue = Math.max(...slices.map(s => s.value), 1);
 
     return (
-      <div className="w-full h-full flex-1 min-h-0 flex flex-col @[380px]:flex-row items-center gap-5 @[380px]:gap-10 overflow-hidden @container">
+      <div className="w-full h-full flex-1 min-h-0 @container">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center gap-5 @[380px]:gap-10 overflow-hidden">
         <DonutChart
           key={chartType}
           slices={slices}
@@ -627,6 +619,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
             })}
           </div>
         </div>
+      </div>
       </div>
     );
   }

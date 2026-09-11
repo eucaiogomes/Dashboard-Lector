@@ -19,6 +19,11 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.15 });
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  // Hooks must run unconditionally on every render (Rules of Hooks) — this was previously
+  // called only inside the "Linha" branch below, so switching chartType to/from Linha on the
+  // same card changed the number of hooks called and crashed React ("Rendered more hooks
+  // than during the previous render").
+  const gradientId = useUniqueId('lineGrad');
 
   // 1. Horizontal Bar Chart
   if (chartType === 'Barra') {
@@ -292,7 +297,6 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
 
   // 3. Line Chart
   if (chartType === 'Linha') {
-    const gradientId = useUniqueId('lineGrad');
     const hasSecondary = data.some(d => d.valueSecondary !== undefined);
     const totalPoints = data.length;
     const valuesPrimary = data.map(d => d.value);
@@ -513,7 +517,8 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     });
 
     return (
-      <div ref={containerRef} className="w-full h-full py-4 flex flex-col @[380px]:flex-row items-center gap-6 @[380px]:gap-10 @container">
+      <div ref={containerRef} className="w-full h-full py-4 @container">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center gap-6 @[380px]:gap-10">
         {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
             de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
         <DonutChart
@@ -586,6 +591,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             })}
           </div>
         </div>
+      </div>
       </div>
     );
   }
