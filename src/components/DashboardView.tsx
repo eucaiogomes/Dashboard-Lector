@@ -23,7 +23,6 @@ import { EducacaoPermanenteBlock } from './EducacaoPermanenteBlock';
 import { InstitucionaisKpiBlock } from './InstitucionaisKpiBlock';
 import { InternosKpiBlock } from './InternosKpiBlock';
 import { AddChartModal } from './AddChartModal';
-import { AddPanelModal } from './AddPanelModal';
 import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ReportDetailOverlay } from './ReportDetailOverlay';
@@ -38,6 +37,7 @@ import {
   MIN_H,
   MAX_W,
   MAX_H,
+  customMinSizeForCardId,
   loadStoredLayout,
   reconcileLayout,
   saveStoredLayout,
@@ -45,7 +45,12 @@ import {
   loadStoredPanels,
   saveStoredPanels,
   loadActivePanelId,
-  saveActivePanelId
+  saveActivePanelId,
+  loadStoredCards,
+  saveStoredCards,
+  clearStoredCards,
+  StoredCardMeta,
+  StoredPanelMeta
 } from '../utils/gridLayout';
 
 interface SpecialWidgetProps {
@@ -69,42 +74,18 @@ const SPECIAL_WIDGETS: Record<string, React.FC<SpecialWidgetProps>> = {
   [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock
 };
 
-/** Default cards shown when the Dashboard loads, with fixed positions/sizes mirroring how
- * the source screens are laid out (Indicadores T&D — Institucionais/Internos) and the
- * reference Qlik "Treinamentos Institucionais" panel: a full-width summary up top, then each
- * section grouped together — a tall "evolution" block beside its stacked companions, wide
- * tables spanning the full row. 12-column grid, 8 height-units per default row. */
-const DEFAULT_LAYOUT_SPEC: { catalogId: string; x: number; y: number; w: number; h: number }[] = [
-  // Execução das Turmas — full-width summary at the top, like the Qlik KPI strip.
-  { catalogId: SPECIAL_WIDGET_IDS.turmasExecucao, x: 0, y: 0, w: 12, h: 8 },
+type LayoutSpec = { catalogId: string; x: number; y: number; w: number; h: number };
 
-  // Institucionais — tabbed evolution beside % Realização + Agenda.
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 8, w: 6, h: 12 },
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 8, w: 6, h: 6 },
-  { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 14, w: 6, h: 6 },
-
-  // Internos — Evolução (left) / Ativos x Treinados + Treinamentos (middle) / Ranking por Cargo (right).
-  { catalogId: SPECIAL_WIDGET_IDS.internosEvolucao, x: 0, y: 20, w: 4, h: 12 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosAtivosTreinados, x: 4, y: 20, w: 4, h: 6 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosTreinamentosHoras, x: 4, y: 26, w: 4, h: 6 },
-  { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 20, w: 4, h: 12 },
-
-  // Centro de Custo — full-width table at the bottom.
-  { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 32, w: 12, h: 9 },
-
-  // Educação Permanente — ficha por setor, abrangendo a largura completa abaixo de tudo.
-  { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 41, w: 12, h: 8 }
-];
-
-/** Presets offered by the "Adicionar Painel" list — each creates a new tab that populates
- * its own full set of draggable, resizable cards on the grid. */
+/** Indicadores T&D presets that a "Ver Indicadores" CTA elsewhere in the app opens as a panel
+ * (see `focusViewRequest`) — each seeds its panel with its own set of draggable, resizable
+ * cards. "Adicionar Painel" doesn't use them: it always creates a blank panel. */
 const PANEL_TEMPLATES: { id: ViewType; name: string }[] = [
   { id: 'Treinamentos Institucionais', name: 'Treinamentos Institucionais' },
   { id: 'Treinamentos Internos', name: 'Treinamentos Internos' },
   { id: 'Por Centro de Custo', name: 'Por Centro de Custo' }
 ];
 
-const TEMPLATE_LAYOUT_SPECS: Record<ViewType, { catalogId: string; x: number; y: number; w: number; h: number }[]> = {
+const TEMPLATE_LAYOUT_SPECS: Record<ViewType, LayoutSpec[]> = {
   'Treinamentos Institucionais': [
     { catalogId: SPECIAL_WIDGET_IDS.institucionaisKpis, x: 0, y: 0, w: 12, h: 6 },
     { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 6, w: 6, h: 12 },
@@ -131,49 +112,79 @@ const createPanelFromTemplate = (
   return buildDashboardFromSpec(spec, period);
 };
 
-/** Builds cards + a grid layout from a subset of DEFAULT_LAYOUT_SPEC, so each card id lines up
- * with its fixed slot. Positions are normalized to start at y=0 so a template panel doesn't
- * inherit a big empty gap from where its section sits in the full default dashboard. */
+const DEFAULT_CATEGORY = 'Todos os Treinamentos';
+const INITIAL_PERIOD = 'Agosto - 2026';
+
+/** Builds one card for a catalog chart, generating its data for the given period/category. */
+const buildCard = (
+  chartDef: CatalogChartDef,
+  id: string,
+  period: string,
+  category: string = DEFAULT_CATEGORY,
+  chartType: SupportedChartType = chartDef.defaultType
+): DashboardCardItem => {
+  const generated = chartDef.generateData({ period, category });
+  return {
+    id,
+    catalogId: chartDef.id,
+    title: chartDef.title,
+    subtitle: chartDef.subtitle,
+    group: chartDef.group,
+    chartType,
+    allowedTypes: chartDef.allowedTypes,
+    selectedCategory: category,
+    availableCategories: chartDef.categories || DEFAULT_TRAINING_CATEGORIES,
+    maxScale: generated.maxScale,
+    ticks: generated.ticks,
+    unit: chartDef.unit,
+    data: generated.data,
+    meta: generated.meta
+  };
+};
+
+/** Rebuilds a panel's persisted cards from the catalog, dropping any whose chart no longer exists. */
+const restoreCards = (stored: StoredCardMeta[], period: string): DashboardCardItem[] =>
+  stored.flatMap(meta => {
+    const chartDef = CHART_CATALOG.find(c => c.id === meta.catalogId);
+    if (!chartDef) return [];
+    const chartType = chartDef.allowedTypes.find(t => t === meta.chartType) ?? chartDef.defaultType;
+    const category = typeof meta.selectedCategory === 'string' ? meta.selectedCategory : DEFAULT_CATEGORY;
+    return [buildCard(chartDef, meta.id, period, category, chartType)];
+  });
+
+const toStoredCard = (card: DashboardCardItem): StoredCardMeta => ({
+  id: card.id,
+  catalogId: card.catalogId,
+  chartType: card.chartType,
+  selectedCategory: card.selectedCategory
+});
+
+/** Builds cards + a grid layout from a template's spec, so each card id lines up with its
+ * fixed slot. Positions are normalized to start at y=0. */
 const buildDashboardFromSpec = (
-  specs: typeof DEFAULT_LAYOUT_SPEC,
+  specs: LayoutSpec[],
   period: string
 ): { cards: DashboardCardItem[]; layout: LayoutItem[] } => {
   const cards: DashboardCardItem[] = [];
   const layout: LayoutItem[] = [];
-  const defaultCat = 'Todos os Treinamentos';
   const minY = specs.reduce((min, s) => Math.min(min, s.y), Infinity);
 
   specs.forEach(spec => {
     const chartDef = CHART_CATALOG.find(c => c.id === spec.catalogId);
     if (!chartDef) return;
 
-    const generated = chartDef.generateData({ period, category: defaultCat });
     const cardId = `card_${chartDef.id}`;
-    cards.push({
-      id: cardId,
-      catalogId: chartDef.id,
-      title: chartDef.title,
-      subtitle: chartDef.subtitle,
-      group: chartDef.group,
-      chartType: chartDef.defaultType,
-      allowedTypes: chartDef.allowedTypes,
-      selectedCategory: defaultCat,
-      availableCategories: chartDef.categories || DEFAULT_TRAINING_CATEGORIES,
-      maxScale: generated.maxScale,
-      ticks: generated.ticks,
-      unit: chartDef.unit,
-      data: generated.data,
-      meta: generated.meta
-    });
+    cards.push(buildCard(chartDef, cardId, period));
 
+    const customMin = customMinSizeForCardId(cardId);
     layout.push({
       i: cardId,
       x: spec.x,
       y: spec.y - minY,
       w: spec.w,
       h: spec.h,
-      minW: MIN_W,
-      minH: MIN_H,
+      minW: customMin ? customMin.w : MIN_W,
+      minH: customMin ? customMin.h : MIN_H,
       maxW: MAX_W,
       maxH: MAX_H
     });
@@ -182,15 +193,10 @@ const buildDashboardFromSpec = (
   return { cards, layout };
 };
 
-/** The default panel's cards + layout, built from the full DEFAULT_LAYOUT_SPEC. */
-const createDefaultDashboard = (period: string): { cards: DashboardCardItem[]; layout: LayoutItem[] } =>
-  buildDashboardFromSpec(DEFAULT_LAYOUT_SPEC, period);
-
-/** A dashboard "aba". The default panel holds its own cards + grid layout (the original card
- * set). A panel created from PANEL_TEMPLATES instead carries a `templateId` (one of the
- * ViewType values) and renders IndicadoresFullPageView — a full replica of that Indicadores
- * T&D screen — in place of the card grid; its cards/layout stay empty and unused. Any other
- * panel is a blank card grid the user builds up via "Adicionar Gráfico". */
+/** A dashboard "aba": its own cards + grid layout. Every panel — the default one included —
+ * starts blank and the user fills it via "Adicionar Gráfico". The exception is a panel opened
+ * by a "Ver Indicadores" CTA: it's seeded from PANEL_TEMPLATES and keeps that `templateId`, so
+ * the CTA can re-focus it and "Restaurar Padrão" can bring its widget set back. */
 interface DashboardPanel {
   id: string;
   name: string;
@@ -202,6 +208,14 @@ interface DashboardPanel {
 const DEFAULT_PANEL_ID = 'default';
 
 const createEmptyPanel = (id: string, name: string): DashboardPanel => ({ id, name, cards: [], layout: [] });
+
+/** "Painel 2", "Painel 3"… — the first number not already taken by another panel's name. */
+const nextPanelName = (panels: DashboardPanel[]): string => {
+  const names = new Set(panels.map(p => p.name));
+  let n = panels.length + 1;
+  while (names.has(`Painel ${n}`)) n++;
+  return `Painel ${n}`;
+};
 
 interface DashboardViewProps {
   // Bumping `token` re-triggers the focus even when `view` repeats the previous request —
@@ -229,53 +243,31 @@ const useIsDesktop = (breakpointPx = 1024): boolean => {
 };
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState('Agosto - 2026');
+  const [selectedPeriod, setSelectedPeriod] = useState(INITIAL_PERIOD);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showAddPanelModal, setShowAddPanelModal] = useState(false);
   const [selectedCardForModal, setSelectedCardForModal] = useState<DashboardCardItem | null>(null);
   const [detailsReportCatalogId, setDetailsReportCatalogId] = useState<string | null>(null);
   const [editingPanelId, setEditingPanelId] = useState<string | null>(null);
 
-  // Dashboard panels ("abas") — the default panel starts with the 8 default "bloco completo"
-  // widgets, any panel the user adds afterwards starts blank. Panel names/order persist to
-  // localStorage; each panel's own grid layout is restored from localStorage when available.
+  // Dashboard panels ("abas") — every panel starts blank and the user fills each one via
+  // "Adicionar Gráfico". Panel names/order, each panel's cards and its grid layout all
+  // persist to localStorage and are restored here.
   const [panels, setPanels] = useState<DashboardPanel[]>(() => {
     const storedMeta = loadStoredPanels();
-    const metas = storedMeta.length > 0 ? storedMeta : [{ id: DEFAULT_PANEL_ID, name: 'Dashboard' }];
+    const metas: StoredPanelMeta[] =
+      storedMeta.length > 0 ? storedMeta : [{ id: DEFAULT_PANEL_ID, name: 'Dashboard' }];
 
     return metas.map(meta => {
-      if (meta.id === DEFAULT_PANEL_ID) {
-        const { cards: defaultCards, layout: defaultLayout } = createDefaultDashboard('Agosto - 2026');
-        const cardIds = defaultCards.map(c => c.id);
-        const storedLayout = loadStoredLayout(meta.id);
-        const initialLayout = storedLayout.length > 0 ? reconcileLayout(storedLayout, cardIds) : defaultLayout;
-        return {
-          id: meta.id,
-          name: meta.name,
-          cards: defaultCards,
-          layout: verticalCompactor.compact(initialLayout, GRID_COLS)
-        };
-      }
-      const knownTemplate = PANEL_TEMPLATES.find(
-        t => t.id === meta.templateId || t.name === meta.name || meta.name.startsWith(t.name.slice(0, 15))
-      );
-      if (knownTemplate && TEMPLATE_LAYOUT_SPECS[knownTemplate.id]) {
-        const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(knownTemplate.id, 'Agosto - 2026');
-        const cardIds = templateCards.map(c => c.id);
-        const storedLayout = loadStoredLayout(meta.id);
-        const initialLayout = storedLayout.length > 0 ? reconcileLayout(storedLayout, cardIds) : templateLayout;
-        return {
-          id: meta.id,
-          name: meta.name,
-          templateId: knownTemplate.id,
-          cards: templateCards,
-          layout: verticalCompactor.compact(initialLayout, GRID_COLS)
-        };
-      }
-      // Blank panels only persist metadata + layout, not chart cards — they start blank
-      // on reload (same limitation the single-dashboard layout already had).
-      return createEmptyPanel(meta.id, meta.name);
+      const panelCards = restoreCards(loadStoredCards(meta.id), INITIAL_PERIOD);
+      const panelLayout = reconcileLayout(loadStoredLayout(meta.id), panelCards.map(c => c.id));
+      return {
+        id: meta.id,
+        name: meta.name,
+        templateId: PANEL_TEMPLATES.find(t => t.id === meta.templateId)?.id,
+        cards: panelCards,
+        layout: verticalCompactor.compact(panelLayout, GRID_COLS)
+      };
     });
   });
 
@@ -310,23 +302,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       layout: typeof updater === 'function' ? (updater as (prev: LayoutItem[]) => LayoutItem[])(p.layout) : updater
     }));
   };
-
-  // If an active panel has templateId (or matches a known template by name) but currently has 0 cards,
-  // automatically populate its draggable cards and layout so the user can immediately move and resize them.
-  useEffect(() => {
-    const templateMatch = PANEL_TEMPLATES.find(
-      t => t.id === activePanel.templateId || t.name === activePanel.name || activePanel.name.startsWith(t.name.slice(0, 15))
-    );
-    if (activePanel.cards.length === 0 && templateMatch && TEMPLATE_LAYOUT_SPECS[templateMatch.id]) {
-      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(templateMatch.id, selectedPeriod);
-      updateActivePanel(p => ({
-        ...p,
-        templateId: templateMatch.id,
-        cards: templateCards,
-        layout: templateLayout
-      }));
-    }
-  }, [activePanelId, activePanel.cards.length, activePanel.templateId, activePanel.name, selectedPeriod]);
 
   // Automatically separate any overlapping cards from previous sessions
   useEffect(() => {
@@ -440,6 +415,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   }, [layout, activePanelId]);
 
   useEffect(() => {
+    saveStoredCards(cards.map(toStoredCard), activePanelId);
+  }, [cards, activePanelId]);
+
+  useEffect(() => {
     saveStoredPanels(panels.map(p => ({ id: p.id, name: p.name, templateId: p.templateId })));
   }, [panels]);
 
@@ -479,27 +458,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusViewRequest]);
 
-  const handleAddPanelsFromTemplates = (templateIds: string[]) => {
-    if (templateIds.length === 0) return;
-    const newPanels: DashboardPanel[] = [];
-
-    templateIds.forEach((templateId, index) => {
-      const template = PANEL_TEMPLATES.find(t => t.id === templateId);
-      if (!template) return;
-      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(template.id, selectedPeriod);
-      newPanels.push({
-        id: `panel_${Date.now()}_${index}`,
-        name: template.name,
-        templateId: template.id,
-        cards: templateCards,
-        layout: templateLayout
-      });
-    });
-
-    if (newPanels.length === 0) return;
-    setPanels(prev => [...prev, ...newPanels]);
-    setActivePanelId(newPanels[newPanels.length - 1].id);
-    setShowAddPanelModal(false);
+  // "Adicionar Painel" creates a blank panel straight away — the user then fills it via
+  // "Adicionar gráficos" inside it.
+  const handleAddPanel = () => {
+    const newPanel = createEmptyPanel(`panel_${Date.now()}`, nextPanelName(panels));
+    setPanels(prev => [...prev, newPanel]);
+    setActivePanelId(newPanel.id);
   };
 
   const handleRemovePanel = (panelId: string) => {
@@ -507,6 +471,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     const remaining = panels.filter(p => p.id !== panelId);
     setPanels(remaining);
     clearStoredLayout(panelId);
+    clearStoredCards(panelId);
     if (activePanelId === panelId) {
       setActivePanelId(remaining[0].id);
     }
@@ -528,29 +493,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     setLayout(prev => prev.filter(item => item.i !== cardId));
   };
 
-  const handleAddChartFromCatalog = (chartDef: CatalogChartDef) => {
-    const defaultCat = 'Todos os Treinamentos';
-    const generated = chartDef.generateData({ period: selectedPeriod, category: defaultCat });
-    const newCard: DashboardCardItem = {
-      id: `card_${chartDef.id}_${Date.now()}`,
-      catalogId: chartDef.id,
-      title: chartDef.title,
-      subtitle: chartDef.subtitle,
-      group: chartDef.group,
-      chartType: chartDef.defaultType,
-      allowedTypes: chartDef.allowedTypes,
-      selectedCategory: defaultCat,
-      availableCategories: chartDef.categories || DEFAULT_TRAINING_CATEGORIES,
-      maxScale: generated.maxScale,
-      ticks: generated.ticks,
-      unit: chartDef.unit,
-      data: generated.data,
-      meta: generated.meta
-    };
+  const handleAddChartsFromCatalog = (chartDefs: CatalogChartDef[]) => {
+    const now = Date.now();
+    const newCards = chartDefs.map((chartDef, idx) =>
+      buildCard(chartDef, `card_${chartDef.id}_${now}_${idx}`, selectedPeriod)
+    );
 
-    setCards(prev => [...prev, newCard]);
+    setCards(prev => [...prev, ...newCards]);
     setLayout(prev => {
-      const reconciled = reconcileLayout(prev, [...prev.map(item => item.i), newCard.id]);
+      const reconciled = reconcileLayout(prev, [
+        ...prev.map(item => item.i),
+        ...newCards.map(c => c.id)
+      ]);
       return verticalCompactor.compact(reconciled, GRID_COLS);
     });
   };
@@ -581,14 +535,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
     );
   };
 
-  // On the default panel or template panels this restores the original widget set; on a blank panel
-  // the user created it clears it back to blank.
+  // On a template panel this restores its widget set; every other panel (the default one
+  // included) starts blank, so this clears it back to blank.
   const handleResetDefaultCards = () => {
-    if (activePanelId === DEFAULT_PANEL_ID) {
-      const { cards: defaultCards, layout: defaultLayout } = createDefaultDashboard(selectedPeriod);
-      setCards(defaultCards);
-      setLayout(defaultLayout);
-    } else if (activePanel.templateId && TEMPLATE_LAYOUT_SPECS[activePanel.templateId]) {
+    if (activePanel.templateId && TEMPLATE_LAYOUT_SPECS[activePanel.templateId]) {
       const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(activePanel.templateId, selectedPeriod);
       setCards(templateCards);
       setLayout(templateLayout);
@@ -795,16 +745,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             <i className="icon-plus text-[12px] font-bold"></i>
             <span>Adicionar Gráfico</span>
           </button>
-
-          {/* Add Panel Button (+) */}
-          <button
-            onClick={() => setShowAddPanelModal(true)}
-            className="h-[34px] px-3.5 rounded-[6px] bg-white hover:bg-[#f0f4f8] text-[#004e4c] border border-[#cfd6e0] hover:border-[#004e4c] text-[12.5px] font-bold flex items-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-95"
-            title="Criar uma nova aba de dashboard"
-          >
-            <i className="icon-plus text-[12px] font-bold"></i>
-            <span>Adicionar Painel</span>
-          </button>
         </div>
 
         {/* Quick actions on the right */}
@@ -821,6 +761,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
 
       {/* Panel Tabs — switch between independent dashboard "abas" (now positioned below the filter/action toolbar) */}
       <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+        {/* Add Panel Button (+) — cria um novo painel em branco, à esquerda das abas */}
+        <button
+          type="button"
+          onClick={handleAddPanel}
+          className="h-[30px] w-[30px] shrink-0 rounded-[6px] bg-white hover:bg-[#f0f4f8] text-[#004e4c] border border-[#cfd6e0] hover:border-[#004e4c] flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+          title="Criar um novo painel em branco"
+          aria-label="Adicionar painel"
+        >
+          <i className="icon-plus text-[12px] font-bold"></i>
+        </button>
+
         {panels.map(panel => (
           <div
             key={panel.id}
@@ -880,16 +831,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           <div className="w-16 h-16 rounded-full bg-[#004e4c]/10 text-[#004e4c] flex items-center justify-center mx-auto mb-3">
             <i className="icon-performance text-[28px]"></i>
           </div>
-          <h3 className="text-base font-bold text-[#004e4c]">Nenhum gráfico no painel</h3>
+          <h3 className="text-base font-bold text-[#004e4c]">Este painel está em branco</h3>
           <p className="text-xs text-[#6b7684] max-w-md mx-auto mt-1 mb-4">
-            Seu painel está vazio. Clique no botão abaixo para escolher entre os {CHART_CATALOG.length} gráficos disponíveis dos Indicadores T&amp;D.
+            Clique em "Adicionar gráficos" e escolha quais dos {CHART_CATALOG.length} gráficos dos Indicadores T&amp;D deseja exibir neste painel.
           </p>
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-[#00995d] hover:bg-[#00824f] text-[#eef7f4] text-xs font-bold rounded shadow cursor-pointer transition-all"
           >
             <i className="icon-plus mr-1.5"></i>
-            Explorar Catálogo de Gráficos
+            Adicionar gráficos
           </button>
         </div>
       ) : isDesktop ? (
@@ -945,16 +896,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       <AddChartModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSelectChart={handleAddChartFromCatalog}
+        onAddCharts={handleAddChartsFromCatalog}
         existingChartIds={existingChartIds}
-      />
-
-      {/* Add Panel Modal — pick a preset tab (Institucionais / Internos / Centro de Custo) */}
-      <AddPanelModal
-        isOpen={showAddPanelModal}
-        onClose={() => setShowAddPanelModal(false)}
-        templates={PANEL_TEMPLATES}
-        onCreatePanels={handleAddPanelsFromTemplates}
       />
 
       {/* Detailed T&D Indicators Modal with Chart on Top + Full Report Below */}

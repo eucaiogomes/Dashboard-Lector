@@ -73,6 +73,12 @@ export const Header: React.FC<HeaderProps> = () => {
           className="w-full h-full object-cover object-center z-0"
         />
 
+        {/* Module logo (top-left, over the banner) */}
+        <div className="absolute left-4 sm:left-6 top-3 sm:top-4 z-20 leading-[1.05]">
+          <div className="text-white font-bold text-[17px] sm:text-[20px] md:text-[22px] tracking-tight">Educação</div>
+          <div className="text-white font-bold text-[17px] sm:text-[20px] md:text-[22px] tracking-tight">Corporativa</div>
+        </div>
+
         {/* Alterar imagem button (bottom right) */}
         <div className="absolute right-3 sm:right-4 bottom-2 z-20">
           <button

@@ -3,6 +3,7 @@ import { turmasExecucaoData } from '../data/turmasExecucaoData';
 import { VerDetalhesButton } from './VerDetalhesButton';
 import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
 import { UniversalChartRenderer } from './UniversalChartRenderer';
+import { DonutChart } from './DonutChart';
 
 interface TurmasExecucaoDonutBlockProps {
   onVerDetalhes?: () => void;
@@ -13,11 +14,6 @@ const STATUS_COLORS = {
   agendado: '#d99a24',
   naoRealizado: '#a32020'
 };
-
-const SIZE = 140;
-const STROKE = 20;
-const RADIUS = (SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export const TurmasExecucaoDonutBlock: React.FC<TurmasExecucaoDonutBlockProps> = ({ onVerDetalhes }) => {
   const [chartType, setChartType] = useState<ChartTypeOption>('Pizza');
@@ -38,10 +34,8 @@ export const TurmasExecucaoDonutBlock: React.FC<TurmasExecucaoDonutBlockProps> =
     { key: 'naoRealizado', label: 'Não Realizado', value: current.naoRealizado, color: STATUS_COLORS.naoRealizado }
   ];
 
-  let cumulative = 0;
-
   return (
-    <div className="h-full w-full bg-white rounded-[6px] border border-[#e0e5eb] shadow-2xs p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden relative">
+    <div className="h-full w-full bg-white rounded-2xl border border-[#e0e5eb] shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden relative">
       {/* Header: title + Mês/Ano filter */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#f0f3f7] shrink-0">
         <div className="min-w-0 flex-1">
@@ -75,50 +69,26 @@ export const TurmasExecucaoDonutBlock: React.FC<TurmasExecucaoDonutBlockProps> =
       {/* Body: custom Donut if Pizza, or UniversalChartRenderer if Barra/Coluna/Linha */}
       <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden my-1">
         {chartType === 'Pizza' ? (
-          <div className="flex items-center justify-around gap-3 sm:gap-6 w-full h-full py-1">
-            {/* Donut Graphic */}
-            <div className="relative shrink-0 flex items-center justify-center">
-              <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="max-h-[130px] w-auto aspect-square">
-                <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
-                  {segments.map(seg => {
-                    const segLength = (seg.value / (current.previsto || 1)) * CIRCUMFERENCE;
-                    const dashArray = `${segLength} ${CIRCUMFERENCE - segLength}`;
-                    const dashOffset = -cumulative;
-                    cumulative += segLength;
-                    return (
-                      <circle
-                        key={seg.key}
-                        cx={SIZE / 2}
-                        cy={SIZE / 2}
-                        r={RADIUS}
-                        fill="none"
-                        stroke={seg.color}
-                        strokeWidth={STROKE}
-                        strokeDasharray={dashArray}
-                        strokeDashoffset={dashOffset}
-                      >
-                        <title>{`${seg.label}: ${seg.value}`}</title>
-                      </circle>
-                    );
-                  })}
-                </g>
-              </svg>
-
-              {/* Center label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-[20px] sm:text-[23px] font-extrabold text-[#004e4c] leading-none">
-                  {pctLabel}%
-                </div>
-                <div className="text-[9.5px] font-bold text-[#6b7684] mt-0.5 tracking-wide">
-                  Realização
-                </div>
+          <div className="flex items-center justify-center sm:justify-around gap-5 sm:gap-8 w-full h-full py-1">
+            {/* Donut Graphic — mesmo anel (conic-gradient com costura branca) e mesma
+                animação de varredura angular usados em todo gráfico Pizza/Rosca do app. */}
+            <DonutChart
+              slices={segments.map(s => ({ color: s.color, value: s.value }))}
+              outerClassName="w-[170px] h-[170px] sm:w-[190px] sm:h-[190px]"
+              holeClassName="w-[121px] h-[121px] sm:w-[136px] sm:h-[136px]"
+            >
+              <div className="text-[28px] sm:text-[32px] font-extrabold text-[#004e4c] leading-none">
+                {pctLabel}%
               </div>
-            </div>
+              <div className="text-[10.5px] font-bold text-[#6b7684] mt-1 tracking-wide">
+                Realização
+              </div>
+            </DonutChart>
 
             {/* Stats */}
-            <div className="flex flex-col gap-2 min-w-[140px] max-w-[200px]">
+            <div className="flex flex-col gap-2 min-w-[160px] max-w-[220px]">
               <div>
-                <div className="text-[24px] sm:text-[28px] font-extrabold text-[#004e4c] leading-none">
+                <div className="text-[26px] sm:text-[30px] font-extrabold text-[#004e4c] leading-none">
                   {current.previsto}
                 </div>
                 <div className="text-[11px] font-semibold text-[#8a93a0] mt-0.5">

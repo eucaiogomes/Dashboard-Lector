@@ -63,7 +63,7 @@ export const Footer: React.FC = () => {
 
         {/* Right: Lector Live Logo */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[20px] font-extrabold tracking-tight text-white">Lector</span>
+          <img src="/logo-lector-light.svg" alt="Lector" className="h-[18px] w-auto object-contain" />
           <span className="text-[16px] font-semibold text-[#f47920] italic">live</span>
         </div>
       </footer>

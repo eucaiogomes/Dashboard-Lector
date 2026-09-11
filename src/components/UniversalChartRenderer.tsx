@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId, useState } from 'react';
 import { ChartTypeOption } from './ChartTypeSelector';
+import { DonutChart } from './DonutChart';
 
 export interface UniversalChartDataPoint {
   label: string;
@@ -66,6 +67,8 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
   secondaryColor = '#cde3bb',
   showValuesOnBars = true
 }) => {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const areaGradientId = useId();
   const hasSecondary = data.some(d => d.valueSecondary !== undefined);
 
   const valuesPrimary = data.map(d => d.value);
@@ -98,10 +101,10 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
           </div>
 
           {/* Plot area */}
-          <div className="flex-1 min-w-0 relative">
+          <div className="flex-1 min-w-0 relative" onMouseLeave={() => setHoverIdx(null)}>
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
               {gridRatios.map(r => (
-                <div key={r} className={`border-t ${r === 0 ? 'border-[#e4e8ee]' : 'border-[#eef1f5]'}`} />
+                <div key={r} className={`border-t ${r === 0 ? 'border-[#e4e8ee]' : 'border-dashed border-[#e2e8f0]'}`} />
               ))}
             </div>
 
@@ -110,6 +113,8 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                 const hPct = Math.min(100, Math.max(4, (item.value / maxAll) * 100));
                 const hSecPct =
                   item.valueSecondary !== undefined ? Math.min(100, Math.max(4, (item.valueSecondary / maxAll) * 100)) : 0;
+                const barColor = item.color || primaryColor;
+                const isHovered = hoverIdx === idx;
 
                 return (
                   <div key={`${item.label}-${idx}`} className="flex flex-col items-center justify-end h-full flex-1 max-w-[42px] group">
@@ -135,16 +140,39 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                       )}
                       <div
                         key={`${chartType}-pri-${item.label}-${item.value}`}
-                        className={`chart-grow-h ${
+                        className={`chart-grow-h relative transition-[opacity,background] ${
                           item.valueSecondary !== undefined ? 'w-1/2 max-w-[9px]' : 'w-full max-w-[18px]'
-                        } rounded-t-[2px] transition-[opacity] hover:opacity-85`}
+                        } rounded-t-[3px]`}
                         style={{
                           height: `${hPct}%`,
                           animationDelay: `${idx * 30 + 60}ms`,
-                          backgroundColor: item.color || primaryColor
+                          background: isHovered ? barColor : `linear-gradient(180deg, ${barColor} 0%, ${barColor}77 100%)`
                         }}
-                        title={`${item.label} — ${legendPrimary}: ${item.value}${unit}`}
-                      />
+                        onMouseEnter={() => setHoverIdx(idx)}
+                        onFocus={() => setHoverIdx(idx)}
+                        tabIndex={0}
+                        role="img"
+                        aria-label={`${item.label} — ${legendPrimary}: ${item.value}${unit}`}
+                      >
+                        {isHovered && (
+                          <div
+                            className={`absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none ${
+                              hPct > 75 ? 'top-2' : 'bottom-full mb-2'
+                            }`}
+                          >
+                            <div className="bg-[#004e4c] text-white rounded-lg shadow-lg px-3 py-2 whitespace-nowrap">
+                              <div className="text-[11px] font-bold mb-1">{item.label}</div>
+                              <div className="flex items-center gap-1.5 text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: barColor }} />
+                                <span className="tabular-nums font-semibold">
+                                  {item.value.toLocaleString('pt-BR')}
+                                  {unit === '%' ? '%' : unit ? ` ${unit}` : ''} {legendPrimary.toLowerCase()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -314,7 +342,9 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
     const last = pointsPrimary[pointsPrimary.length - 1];
     const badgeText = `${formatVal(last?.value ?? 0)}${unit === '%' ? '%' : ''}`;
     const gridRatios = [1, 0.75, 0.5, 0.25, 0];
-    const lineDrawMs = 900;
+    // Duração da subida (área + linhas crescendo juntas de baixo para cima) — os pontos e o
+    // badge final aguardam essa animação terminar antes de aparecer.
+    const riseMs = 700;
 
     // Percentage position within the plot box — used for the HTML overlay (dots, end badge)
     // so those stay perfectly round/proportioned even when the SVG (preserveAspectRatio="none")
@@ -344,59 +374,97 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
           </div>
 
           {/* Plot area: only this — the grid + the curve — stretches to fill the card */}
-          <div className="relative flex-1 min-w-0">
+          <div className="relative flex-1 min-w-0" onMouseLeave={() => setHoverIdx(null)}>
             <svg
               viewBox={`0 0 ${svgWidth} ${svgHeight}`}
               className="absolute inset-0 w-full h-full"
               preserveAspectRatio="none"
             >
-              {/* Full scale grid: horizontal (value) + vertical (one per category), like a real chart canvas */}
+              <defs>
+                <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={primaryColor} stopOpacity={0.5} />
+                  <stop offset="100%" stopColor={primaryColor} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+
+              {/* Grade tracejada: horizontal (valor) + vertical (uma por categoria) */}
               {gridRatios.map(ratio => {
                 const yPos = svgHeight - padY - ratio * (svgHeight - padY * 2);
-                return <line key={`h-${ratio}`} x1={padLeft} y1={yPos} x2={svgWidth - padRight} y2={yPos} stroke="#eef1f5" />;
+                return (
+                  <line
+                    key={`h-${ratio}`}
+                    x1={padLeft}
+                    y1={yPos}
+                    x2={svgWidth - padRight}
+                    y2={yPos}
+                    stroke="#e2e8f0"
+                    strokeDasharray="3 3"
+                  />
+                );
               })}
               {pointsPrimary.map((p, idx) => (
-                <line key={`v-${idx}`} x1={p.x} y1={padY} x2={p.x} y2={svgHeight - padY} stroke="#f3f5f8" />
+                <line
+                  key={`v-${idx}`}
+                  x1={p.x}
+                  y1={padY}
+                  x2={p.x}
+                  y2={svgHeight - padY}
+                  stroke="#e2e8f0"
+                  strokeDasharray="3 3"
+                />
               ))}
 
-              {/* Solid fill — a flat tone reads as "premium filled area", not a washed-out gradient */}
-              <path className="chart-fade" style={{ animationDelay: `${lineDrawMs * 0.55}ms` }} d={areaPrimary} fill={primaryColor} fillOpacity={0.82} />
+              {/* Guia vertical tracejada no ponto em foco (hover, ou o último por padrão) */}
+              {(() => {
+                const focusIdx = hoverIdx ?? pointsPrimary.length - 1;
+                const focusPoint = pointsPrimary[focusIdx];
+                if (!focusPoint) return null;
+                return (
+                  <line
+                    x1={focusPoint.x}
+                    y1={padY}
+                    x2={focusPoint.x}
+                    y2={svgHeight - padY}
+                    stroke="#9fb0c3"
+                    strokeDasharray="2 3"
+                    strokeWidth="1"
+                  />
+                );
+              })()}
 
-              {hasSecondary && (
+              {/* Área + linhas sobem juntas de baixo para cima, ancoradas na base do gráfico */}
+              <g className="chart-line-rise">
+                <path d={areaPrimary} fill={`url(#${areaGradientId})`} />
+
+                {hasSecondary && (
+                  <path
+                    d={pathSecondary}
+                    fill="none"
+                    stroke={secondaryColor}
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                )}
+
                 <path
-                  className="chart-line-draw"
-                  pathLength={1}
-                  d={pathSecondary}
+                  d={pathPrimary}
                   fill="none"
-                  stroke={secondaryColor}
-                  strokeWidth="1.75"
-                  strokeDasharray="1"
+                  stroke={primaryColor}
+                  strokeWidth="2.25"
                   strokeLinecap="round"
-                  style={{ animationDuration: `${lineDrawMs}ms` }}
+                  strokeLinejoin="round"
                 />
-              )}
-
-              <path
-                className="chart-line-draw"
-                pathLength={1}
-                d={pathPrimary}
-                fill="none"
-                stroke={primaryColor}
-                strokeWidth="2.25"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ animationDuration: `${lineDrawMs}ms` }}
-              />
+              </g>
             </svg>
 
-            {/* Dots + end badge live outside the SVG's stretched coordinate system, positioned by
-                percentage, so they render as true circles/pills instead of ellipses. */}
+            {/* Dots + tooltip vivem fora do sistema de coordenadas esticado do SVG, posicionados
+                por porcentagem, para renderizarem como círculos/pílulas de verdade. */}
             {hasSecondary &&
               pointsSecondary.map((p, idx) => (
                 <span
                   key={`sec-${idx}`}
                   className="chart-fade absolute -translate-x-1/2 -translate-y-1/2 p-[5px] cursor-pointer"
-                  style={{ left: relX(p.x), top: relY(p.y), animationDelay: `${(idx / Math.max(totalPoints - 1, 1)) * lineDrawMs}ms` }}
+                  style={{ left: relX(p.x), top: relY(p.y), animationDelay: `${riseMs * 0.75}ms` }}
                   title={`${p.label} — ${legendSecondary}: ${p.value}${unit}`}
                 >
                   <span className="block w-[5px] h-[5px] rounded-full ring-2 ring-white" style={{ backgroundColor: secondaryColor }} />
@@ -405,26 +473,35 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
 
             {pointsPrimary.map((p, idx) => {
               const isLast = idx === pointsPrimary.length - 1;
-              const delay = (idx / Math.max(totalPoints - 1, 1)) * lineDrawMs;
+              const isFocused = (hoverIdx ?? pointsPrimary.length - 1) === idx;
               return (
                 <span
                   key={`prim-${idx}`}
-                  className="chart-fade absolute -translate-x-1/2 -translate-y-1/2 p-[6px] cursor-pointer"
-                  style={{ left: relX(p.x), top: relY(p.y), animationDelay: `${delay}ms` }}
-                  title={`${p.label} — ${legendPrimary}: ${p.value}${unit}`}
+                  className="chart-fade absolute -translate-x-1/2 -translate-y-1/2 p-[7px] cursor-pointer"
+                  style={{ left: relX(p.x), top: relY(p.y), animationDelay: `${riseMs * 0.75}ms` }}
+                  onMouseEnter={() => setHoverIdx(idx)}
+                  onFocus={() => setHoverIdx(idx)}
+                  tabIndex={0}
                 >
                   <span
-                    className={`block rounded-full ring-[1.5px] ring-white ${isLast ? 'w-[9px] h-[9px]' : 'w-[5px] h-[5px]'}`}
-                    style={{ backgroundColor: p.color || primaryColor }}
+                    className={`block rounded-full bg-white transition-all ${isFocused ? 'w-[11px] h-[11px]' : 'w-[7px] h-[7px]'}`}
+                    style={{ border: `${isFocused ? '2.5px' : '2px'} solid ${p.color || primaryColor}` }}
                   />
+                  {isLast && (
+                    <span
+                      className="absolute inset-0 m-auto w-[5px] h-[5px] rounded-full pointer-events-none"
+                      style={{ backgroundColor: p.color || primaryColor }}
+                    />
+                  )}
                 </span>
               );
             })}
 
+            {/* Badge fixo do valor mais recente — sempre visível junto ao último ponto */}
             {last && (
               <div
-                className="chart-fade-in absolute -translate-x-1/2 -translate-y-[calc(100%+10px)]"
-                style={{ left: relX(last.x), top: relY(last.y), animationDelay: `${lineDrawMs + 80}ms` }}
+                className="chart-fade-in absolute -translate-x-1/2 -translate-y-[calc(100%+10px)] pointer-events-none"
+                style={{ left: relX(last.x), top: relY(last.y), animationDelay: `${riseMs + 80}ms` }}
               >
                 <span
                   className="inline-flex items-center justify-center h-4 min-w-[26px] px-1.5 rounded-full text-[9.5px] font-bold text-white whitespace-nowrap tabular-nums"
@@ -432,6 +509,35 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                 >
                   {badgeText}
                 </span>
+              </div>
+            )}
+
+            {/* Tooltip do ponto sob o mouse — mês, legenda e valor, como um card flutuante.
+                Quando o ponto está perto do topo do gráfico, o tooltip nasce abaixo dele em
+                vez de acima, senão fica cortado pela borda do card. */}
+            {hoverIdx !== null && pointsPrimary[hoverIdx] && (
+              <div
+                className={`chart-fade-in absolute z-10 -translate-x-1/2 pointer-events-none ${
+                  pointsPrimary[hoverIdx].y < svgHeight * 0.3
+                    ? 'translate-y-[14px]'
+                    : '-translate-y-[calc(100%+14px)]'
+                }`}
+                style={{ left: relX(pointsPrimary[hoverIdx].x), top: relY(pointsPrimary[hoverIdx].y) }}
+              >
+                <div className="bg-white rounded-lg shadow-lg border border-[#e4e8ee] px-3 py-2 whitespace-nowrap">
+                  <div className="text-[11px] font-bold text-[#004e4c] mb-1">{pointsPrimary[hoverIdx].label}</div>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: pointsPrimary[hoverIdx].color || primaryColor }}
+                    />
+                    <span className="text-[#6b7684] font-medium">{legendPrimary}</span>
+                    <span className="font-bold text-[#004e4c] tabular-nums">
+                      {formatVal(pointsPrimary[hoverIdx].value)}
+                      {unit === '%' ? '%' : ''}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -465,34 +571,61 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
       return { ...d, color, start, end: accum };
     });
 
-    const conicStops = slices.map(s => `${s.color} ${s.start.toFixed(2)}% ${s.end.toFixed(2)}%`).join(', ');
+    const maxSliceValue = Math.max(...slices.map(s => s.value), 1);
 
     return (
-      <div className="w-full h-full flex-1 min-h-0 flex items-center justify-around gap-3 overflow-hidden">
-        <div className="relative shrink-0 flex items-center justify-center">
-          <div
-            key={chartType}
-            className="chart-donut-in w-[88px] h-[88px] sm:w-[96px] sm:h-[96px] rounded-full flex items-center justify-center transition-transform hover:scale-[1.03]"
-            style={{ background: `conic-gradient(${conicStops})` }}
-          >
-            <div className="w-[58px] h-[58px] sm:w-16 sm:h-16 rounded-full bg-white" />
+      <div className="w-full h-full flex-1 min-h-0 flex flex-col sm:flex-row items-center gap-5 sm:gap-10 overflow-hidden">
+        <DonutChart
+          key={chartType}
+          slices={slices}
+          showPercentLabels={false}
+          outerClassName="w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] md:w-[196px] md:h-[196px]"
+          holeClassName="w-[109px] h-[109px] sm:w-[133px] sm:h-[133px] md:w-[153px] md:h-[153px]"
+        >
+          <div className="text-[24px] sm:text-[28px] font-extrabold text-[#004e4c] leading-none">
+            {total.toLocaleString('pt-BR')}
           </div>
-        </div>
+          <div className="text-[9.5px] font-bold text-[#8a93a0] mt-1 tracking-wide text-center px-2">
+            {(unit || 'Total').toUpperCase()}
+          </div>
+        </DonutChart>
 
-        <div className="flex-1 min-w-[124px] max-w-[240px] max-h-full overflow-y-auto space-y-1">
-          {slices.map((item, idx) => (
-            <div
-              key={`${item.label}-${idx}`}
-              className="chart-fade-in flex items-center gap-1.5"
-              style={{ animationDelay: `${250 + idx * 40}ms` }}
-            >
-              <span className="w-2 h-2 rounded-[2px] shrink-0" style={{ backgroundColor: item.color }} />
-              <span className="text-[#4a5462] truncate text-[11px] font-medium">
-                {item.label} <span className="text-[#8a93a0]">-</span>{' '}
-                <span className="font-bold text-[#004e4c] tabular-nums">{item.value.toLocaleString('pt-BR')}</span>
-              </span>
-            </div>
-          ))}
+        <div className="flex-1 min-w-0 w-full max-w-[380px] max-h-full overflow-y-auto">
+          <div className="grid grid-cols-[minmax(60px,180px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+            <span>Categoria</span>
+            <span className="text-right">Valor</span>
+            <span className="text-right">% do total</span>
+          </div>
+          <div className="divide-y divide-[#f5f7f9]">
+            {slices.map((item, idx) => {
+              const pct = ((item.value / total) * 100).toFixed(1).replace('.', ',');
+              const barPct = Math.max(4, (item.value / maxSliceValue) * 100);
+              return (
+                <div
+                  key={`${item.label}-${idx}`}
+                  className="chart-fade-in grid grid-cols-[minmax(60px,180px)_auto_auto] items-center gap-x-3 py-1.5"
+                  style={{ animationDelay: `${250 + idx * 40}ms` }}
+                >
+                  <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="truncate">{item.label}</span>
+                  </span>
+                  <span className="text-right text-[12px] font-bold text-[#004e4c] tabular-nums">
+                    {item.value.toLocaleString('pt-BR')}
+                  </span>
+                  <span className="flex items-center gap-1.5 justify-end">
+                    <span className="text-[11px] text-[#6b7684] tabular-nums w-[38px] text-right shrink-0">{pct}%</span>
+                    <span className="w-10 h-1.5 rounded-full bg-[#eef1f5] overflow-hidden hidden sm:block">
+                      <span
+                        className="chart-grow-w block h-full rounded-full"
+                        style={{ width: `${barPct}%`, backgroundColor: item.color, animationDelay: `${300 + idx * 40}ms` }}
+                      />
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );

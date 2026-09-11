@@ -1,6 +1,7 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { motion, useInView } from 'motion/react';
 import { DashboardCardItem } from '../data/dashboardCatalog';
+import { DonutChart } from './DonutChart';
 
 interface DashboardChartRendererProps {
   card: DashboardCardItem;
@@ -17,6 +18,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
   // Shared ref for viewport-triggered animations
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.15 });
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   // 1. Horizontal Bar Chart
   if (chartType === 'Barra') {
@@ -192,12 +194,17 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
           </motion.div>
         )}
 
-        <div className="flex-1 min-h-0 flex items-end justify-around gap-2 px-3 border-b border-[#cbd5e1] pb-2 relative">
+        <div
+          className="flex-1 min-h-0 flex items-end justify-around gap-2 px-3 border-b border-[#cbd5e1] pb-2 relative"
+          onMouseLeave={() => setHoverIdx(null)}
+        >
           {data.map((item, idx) => {
             const hPct = Math.min(100, Math.max(4, (item.value / maxScale) * 100));
             const hSecPct = item.valueSecondary !== undefined
               ? Math.min(100, Math.max(4, (item.valueSecondary / maxScale) * 100))
               : 0;
+            const barColor = item.color || '#004e4c';
+            const isHovered = hoverIdx === idx;
 
             return (
               <motion.div
@@ -238,10 +245,32 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       duration: 0.65,
                       ease: [0.25, 0.46, 0.45, 0.94]
                     }}
-                    className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[2px] hover:opacity-90 shadow-2xs relative overflow-hidden`}
-                    style={{ backgroundColor: item.color || '#004e4c' }}
-                    title={`${item.label}: ${item.value}`}
-                  />
+                    className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[3px] shadow-2xs relative overflow-visible transition-[background]`}
+                    style={{ background: isHovered ? barColor : `linear-gradient(180deg, ${barColor} 0%, ${barColor}77 100%)` }}
+                    onMouseEnter={() => setHoverIdx(idx)}
+                    onFocus={() => setHoverIdx(idx)}
+                    tabIndex={0}
+                    role="img"
+                    aria-label={`${item.label}: ${item.value}`}
+                  >
+                    {isHovered && (
+                      <div
+                        className={`absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none ${
+                          hPct > 75 ? 'top-2' : 'bottom-full mb-2'
+                        }`}
+                      >
+                        <div className="bg-[#004e4c] text-white rounded-lg shadow-lg px-3 py-2 whitespace-nowrap">
+                          <div className="text-[11px] font-bold mb-1">{item.label}</div>
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: barColor }} />
+                            <span className="tabular-nums font-semibold">
+                              {item.value.toLocaleString('pt-BR')} {(meta?.legendPrimary || 'Realizado').toLowerCase()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
                 </div>
 
                 <motion.span
@@ -350,48 +379,43 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
               </linearGradient>
             </defs>
 
-            {/* Area gradient under curve — fades in after line draws */}
-            <motion.path
-              d={`${pathD} L ${points[points.length - 1]?.x || width},${height - paddingY} L ${points[0]?.x || 0},${height - paddingY} Z`}
-              fill={`url(#${gradientId})`}
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 0.25 } : {}}
-              transition={{ delay: 1.0, duration: 0.6 }}
-            />
-
-            {/* Secondary line if available */}
-            {hasSecondary && pathSecondary && (
-              <motion.path
-                d={pathSecondary}
-                fill="none"
-                stroke="#84cc16"
-                strokeWidth="2"
-                strokeDasharray="4 3"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={isInView ? { pathLength: 1, opacity: 1 } : {}}
-                transition={{
-                  pathLength: { delay: 0.2, duration: 0.9, ease: 'easeInOut' },
-                  opacity: { delay: 0.2, duration: 0.1 }
-                }}
+            {/* Área + linhas sobem juntas de baixo para cima, ancoradas na base do gráfico —
+                em vez de a linha se desenhar da esquerda para a direita. */}
+            <motion.g
+              initial={{ scaleY: 0 }}
+              animate={isInView ? { scaleY: 1 } : {}}
+              transition={{ delay: 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{ transformOrigin: 'bottom' }}
+            >
+              {/* Area gradient under curve */}
+              <path
+                d={`${pathD} L ${points[points.length - 1]?.x || width},${height - paddingY} L ${points[0]?.x || 0},${height - paddingY} Z`}
+                fill={`url(#${gradientId})`}
+                opacity={0.25}
               />
-            )}
 
-            {/* Line Path — draws itself */}
-            <motion.path
-              d={pathD}
-              fill="none"
-              stroke="#004e4c"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={isInView ? { pathLength: 1, opacity: 1 } : {}}
-              transition={{
-                pathLength: { delay: 0.3, duration: 1.0, ease: 'easeInOut' },
-                opacity: { delay: 0.3, duration: 0.1 }
-              }}
-            />
+              {/* Secondary line if available */}
+              {hasSecondary && pathSecondary && (
+                <path
+                  d={pathSecondary}
+                  fill="none"
+                  stroke="#84cc16"
+                  strokeWidth="2"
+                  strokeDasharray="4 3"
+                  strokeLinecap="round"
+                />
+              )}
+
+              {/* Line Path */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#004e4c"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </motion.g>
 
             {/* Secondary Points */}
             {hasSecondary &&
@@ -407,7 +431,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                     initial={{ scale: 0, opacity: 0 }}
                     animate={isInView ? { scale: 1, opacity: 1 } : {}}
                     transition={{
-                      delay: 0.4 + idx * 0.1,
+                      delay: 0.75 + idx * 0.05,
                       duration: 0.3,
                       type: 'spring'
                     }}
@@ -429,7 +453,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   initial={{ scale: 0, opacity: 0 }}
                   animate={isInView ? { scale: 1, opacity: 1 } : {}}
                   transition={{
-                    delay: 0.5 + idx * 0.12,
+                    delay: 0.8 + idx * 0.05,
                     duration: 0.4,
                     type: 'spring',
                     stiffness: 400,
@@ -447,7 +471,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   fill="#004e4c"
                   initial={{ opacity: 0, y: p.y - 4 }}
                   animate={isInView ? { opacity: 1, y: p.y - 9 } : {}}
-                  transition={{ delay: 0.7 + idx * 0.12, duration: 0.3 }}
+                  transition={{ delay: 0.9 + idx * 0.05, duration: 0.3 }}
                 >
                   {p.value}
                 </motion.text>
@@ -459,7 +483,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   fill="#64748b"
                   initial={{ opacity: 0 }}
                   animate={isInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.8 + idx * 0.1, duration: 0.3 }}
+                  transition={{ delay: 0.95 + idx * 0.05, duration: 0.3 }}
                 >
                   {p.label}
                 </motion.text>
@@ -488,80 +512,79 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
       };
     });
 
-    // Conic gradient string
-    const conicStops = slices
-      .map(s => `${s.color || '#004e4c'} ${s.startAngle}% ${s.endAngle}%`)
-      .join(', ');
-
     return (
-      <div ref={containerRef} className="w-full h-full py-4 flex flex-col sm:flex-row items-center justify-around gap-6">
-        {/* Donut graphic */}
-        <motion.div
-          initial={{ scale: 0, rotate: -90, opacity: 0 }}
-          animate={isInView ? { scale: 1, rotate: 0, opacity: 1 } : {}}
-          transition={{
-            scale: { delay: 0.15, duration: 0.6, type: 'spring', stiffness: 200, damping: 18 },
-            rotate: { delay: 0.15, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] },
-            opacity: { delay: 0.15, duration: 0.2 }
-          }}
-          className="relative w-32 h-32 rounded-full border-4 border-white shadow-md flex items-center justify-center shrink-0"
-          style={{
-            background: `conic-gradient(${conicStops})`
-          }}
+      <div ref={containerRef} className="w-full h-full py-4 flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+        {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
+            de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
+        <DonutChart
+          slices={slices.map(s => ({ color: s.color || '#004e4c', value: s.value }))}
+          showPercentLabels={false}
+          outerClassName="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] md:w-[204px] md:h-[204px]"
+          holeClassName="w-[84px] h-[84px] sm:w-[101px] sm:h-[101px] md:w-[115px] md:h-[115px]"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={isInView ? { scale: 1 } : {}}
-            transition={{ delay: 0.5, duration: 0.4, type: 'spring', stiffness: 300 }}
-            className="w-18 h-18 rounded-full bg-white shadow-inner flex flex-col items-center justify-center"
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.7, duration: 0.3 }}
+            className="text-[20px] sm:text-[22px] md:text-[24px] font-black text-[#004e4c] leading-none"
           >
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.7, duration: 0.3 }}
-              className="text-[14px] font-black text-[#004e4c]"
-            >
-              {total}
-            </motion.span>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.8, duration: 0.3 }}
-              className="text-[9px] text-[#8a93a0] font-medium uppercase"
-            >
-              {card.unit || 'Total'}
-            </motion.span>
-          </motion.div>
-        </motion.div>
+            {total}
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.8, duration: 0.3 }}
+            className="text-[10px] sm:text-[10.5px] text-[#8a93a0] font-medium uppercase mt-0.5"
+          >
+            {card.unit || 'Total'}
+          </motion.span>
+        </DonutChart>
 
-        {/* Legend Breakdown */}
-        <div className="flex-1 min-h-0 max-w-[240px] w-full space-y-2 text-xs overflow-y-auto">
-          {slices.map((item, idx) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, x: 20 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ delay: 0.4 + idx * 0.08, duration: 0.35, ease: 'easeOut' }}
-              className="flex items-center justify-between gap-2 p-1 rounded hover:bg-[#f8fafc]"
-            >
-              <div className="flex items-center gap-2 truncate">
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={isInView ? { scale: 1 } : {}}
-                  transition={{ delay: 0.5 + idx * 0.08, duration: 0.25, type: 'spring', stiffness: 400 }}
-                  className="w-3 h-3 rounded-xs shrink-0"
-                  style={{ backgroundColor: item.color || '#004e4c' }}
-                ></motion.span>
-                <span className="text-[#4a5462] truncate text-[11.5px]" title={item.label}>
-                  {item.label}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0 text-right">
-                <span className="font-bold text-[#1f2733] text-[12px]">{item.value}</span>
-                <span className="text-[10px] text-[#8a93a0]">({item.pct}%)</span>
-              </div>
-            </motion.div>
-          ))}
+        {/* Legend Breakdown — tabela com categoria, valor e % com barrinha de proporção,
+            mesmo padrão usado no gráfico de pizza das telas de Indicadores T&D. */}
+        <div className="flex-1 min-h-0 min-w-0 w-full max-w-[380px] overflow-y-auto">
+          <div className="grid grid-cols-[minmax(60px,180px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+            <span>Categoria</span>
+            <span className="text-right">Valor</span>
+            <span className="text-right">% do total</span>
+          </div>
+          <div className="divide-y divide-[#f5f7f9]">
+            {slices.map((item, idx) => {
+              const barPct = Math.max(4, (item.value / Math.max(...slices.map(s => s.value), 1)) * 100);
+              return (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ delay: 0.4 + idx * 0.08, duration: 0.35, ease: 'easeOut' }}
+                  className="grid grid-cols-[minmax(60px,180px)_auto_auto] items-center gap-x-3 py-1.5"
+                >
+                  <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={isInView ? { scale: 1 } : {}}
+                      transition={{ delay: 0.5 + idx * 0.08, duration: 0.25, type: 'spring', stiffness: 400 }}
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color || '#004e4c' }}
+                    ></motion.span>
+                    <span className="truncate" title={item.label}>
+                      {item.label}
+                    </span>
+                  </span>
+                  <span className="text-right text-[12px] font-bold text-[#004e4c] tabular-nums">{item.value}</span>
+                  <span className="flex items-center gap-1.5 justify-end">
+                    <span className="text-[11px] text-[#6b7684] tabular-nums w-[34px] text-right shrink-0">{item.pct}%</span>
+                    <span className="w-10 h-1.5 rounded-full bg-[#eef1f5] overflow-hidden hidden sm:block">
+                      <span
+                        className="chart-grow-w block h-full rounded-full"
+                        style={{ width: `${barPct}%`, backgroundColor: item.color || '#004e4c', animationDelay: `${550 + idx * 40}ms` }}
+                      />
+                    </span>
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );

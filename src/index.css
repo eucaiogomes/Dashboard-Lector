@@ -233,13 +233,22 @@
   animation: chart-grow-w 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Pizza/Rosca: the ring scales+spins in; legend rows settle in right after. */
-@keyframes chart-donut-in {
-  from { opacity: 0; transform: scale(0.4) rotate(-90deg); }
-  to { opacity: 1; transform: scale(1) rotate(0deg); }
+/* Pizza/Rosca: angular sweep reveal — matches the reference chart's animateRotate
+   (each slice draws clockwise from 12 o'clock, 1000ms, easeOutQuart), via an
+   animated conic-gradient mask instead of a scale/fade-in. */
+@property --donut-reveal {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@keyframes chart-donut-sweep {
+  from { --donut-reveal: 0%; }
+  to { --donut-reveal: 100%; }
 }
 .chart-donut-in {
-  animation: chart-donut-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chart-donut-sweep 1s cubic-bezier(0.25, 1, 0.5, 1) both;
+  -webkit-mask-image: conic-gradient(#000 var(--donut-reveal), transparent var(--donut-reveal));
+  mask-image: conic-gradient(#000 var(--donut-reveal), transparent var(--donut-reveal));
 }
 
 @keyframes chart-fade-in {
@@ -250,18 +259,16 @@
   animation: chart-fade-in 0.45s ease-out both;
 }
 
-/* Linha: the stroke draws itself — pair with pathLength={1} on the <path> so
-   dasharray/dashoffset work in normalized [0,1] units regardless of the
-   actual geometry. Area/points fade in as plain opacity (a translate would
-   read oddly on an SVG shape that never moves). */
-@keyframes chart-line-draw {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
+/* Linha: a área + as linhas sobem juntas de baixo para cima (mesma ideia do
+   chart-grow-h das barras: escala a partir da base), em vez de desenhar o
+   traço da esquerda para a direita. */
+@keyframes chart-line-rise {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
 }
-.chart-line-draw {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: chart-line-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) both;
+.chart-line-rise {
+  transform-origin: bottom;
+  animation: chart-line-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes chart-fade {
   from { opacity: 0; }
@@ -274,13 +281,15 @@
 @media (prefers-reduced-motion: reduce) {
   .chart-grow-h,
   .chart-grow-w,
-  .chart-donut-in,
   .chart-fade-in,
   .chart-fade {
     animation: none;
   }
-  .chart-line-draw {
+  .chart-donut-in {
     animation: none;
-    stroke-dashoffset: 0;
+    --donut-reveal: 100%;
+  }
+  .chart-line-rise {
+    animation: none;
   }
 }

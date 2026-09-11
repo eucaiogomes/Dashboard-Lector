@@ -26,14 +26,14 @@ graph TD
   DashboardView -->|painel-modelo| FullPage[IndicadoresFullPageView]
   FullPage --> ViewHeader & FilterBar & KpiSection & TurmasPlanejadasCard
   FullPage --> InstView[InstitucionaisView] & IntView[InternosView] & CCView[CentroCustoView]
-  DashboardView --> AddChartModal & AddPanelModal & DetailedIndicadoresModal & ReportDetailOverlay
+  DashboardView --> AddChartModal & DetailedIndicadoresModal & ReportDetailOverlay
   FilterBar --> DateFilterPicker
 ```
 
 | Camada | Arquivos | Papel |
 |---|---|---|
 | Shell | `App.tsx`, `Header.tsx`, `Sidebar.tsx`, `Footer.tsx`, `OtherViews.tsx` | Moldura do LMS Lector Live (banner, menu "Minha área", rodapé) |
-| Dashboard | `DashboardView.tsx`, `AddChartModal.tsx`, `AddPanelModal.tsx` | Abas, grid, catálogo, persistência |
+| Dashboard | `DashboardView.tsx`, `AddChartModal.tsx` | Abas, grid, catálogo, persistência |
 | Widgets | `*Block.tsx`, `VerDetalhesButton.tsx` | Um componente por widget "bloco completo" |
 | Telas de indicadores | `IndicadoresFullPageView.tsx`, `ViewHeader`, `FilterBar`, `DateFilterPicker`, `KpiSection`, `TurmasPlanejadasCard`, `*View.tsx` | Réplica da tela Indicadores T&D |
 | Relatórios | `ReportDetailOverlay.tsx`, `DetailedIndicadoresModal.tsx`, `utils/exportUtils.ts` | Tabelas detalhadas e exportação |

@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { CHART_CATALOG, CHART_GROUPS, CatalogChartDef } from '../data/dashboardCatalog';
+import React, { useEffect, useState, useMemo } from 'react';
+import { CHART_CATALOG, CatalogChartDef } from '../data/dashboardCatalog';
+import { X } from 'lucide-react';
 
 interface AddChartModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectChart: (chartDef: CatalogChartDef) => void;
+  onAddCharts: (charts: CatalogChartDef[]) => void;
   existingChartIds: string[];
 }
 
 export const AddChartModal: React.FC<AddChartModalProps> = ({
   isOpen,
   onClose,
-  onSelectChart,
+  onAddCharts,
   existingChartIds
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -20,9 +21,17 @@ export const AddChartModal: React.FC<AddChartModalProps> = ({
     if (isOpen) setSelectedIds(new Set());
   }, [isOpen]);
 
+  // Order: Client-requested widgets (Cursos presenciais) first, followed by standard Lector platform widgets
+  const orderedCatalog = useMemo(() => {
+    const clientWidgets = CHART_CATALOG.filter(c => c.isClientWidget);
+    const standardWidgets = CHART_CATALOG.filter(c => !c.isClientWidget);
+    return [...clientWidgets, ...standardWidgets];
+  }, []);
+
   if (!isOpen) return null;
 
-  const toggle = (chartId: string) => {
+  const toggle = (chartId: string, disabled: boolean) => {
+    if (disabled) return;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(chartId)) {
@@ -35,98 +44,122 @@ export const AddChartModal: React.FC<AddChartModalProps> = ({
   };
 
   const handleAddSelected = () => {
-    CHART_CATALOG.forEach(chart => {
-      if (selectedIds.has(chart.id)) onSelectChart(chart);
-    });
+    const toAdd = orderedCatalog.filter(
+      chart => selectedIds.has(chart.id) && !existingChartIds.includes(chart.id)
+    );
+    if (toAdd.length > 0) {
+      onAddCharts(toAdd);
+    }
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-fade-in select-none">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[460px] flex flex-col max-h-[85vh] overflow-hidden">
+      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-[440px] sm:max-w-[460px] flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-6 flex items-start justify-between shrink-0">
-          <h2 className="text-[19px] font-bold text-[#004e4c] tracking-tight">Adicionar Widget</h2>
+        <div className="px-6 pt-6 pb-2 flex items-start justify-between shrink-0">
+          <div>
+            <h2 className="text-[19px] font-bold text-[#103554] tracking-tight">
+              Adicionar Widget
+            </h2>
+            <p className="mt-1 text-[13.5px] text-[#4a5462] font-normal">
+              Selecione os widgets que deseja adicionar
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 -mt-1 -mr-1 rounded-full text-[#8a93a0] hover:text-[#1f2733] hover:bg-[#f5f8fa] flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 -mt-1 -mr-1 rounded-full text-[#8a93a0] hover:text-[#1f2733] hover:bg-[#f1f5f9] flex items-center justify-center transition-colors cursor-pointer"
             title="Fechar"
+            aria-label="Fechar"
           >
-            <i className="icon-close-mini text-[16px]"></i>
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
-        <p className="px-6 mt-1 mb-3 text-[13px] text-[#4a5462] font-medium shrink-0">
-          Selecione os widgets que deseja adicionar
-        </p>
 
-        {/* Checklist, grouped by category */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-1">
-          {CHART_GROUPS.map(group => {
-            const groupCharts = CHART_CATALOG.filter(c => c.group === group.id);
-            if (groupCharts.length === 0) return null;
+        {/* Checklist */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
+          <div className="flex flex-col space-y-1">
+            {orderedCatalog.map(chart => {
+              const isAdded = existingChartIds.includes(chart.id);
+              const isSelected = selectedIds.has(chart.id);
+              const checked = isAdded || isSelected;
+              const disabled = isAdded;
 
-            return (
-              <div key={group.id} className="mb-4 last:mb-1">
-                <div className="flex items-center gap-1.5 px-1.5 py-1.5 sticky top-0 bg-white z-[1]">
-                  <i className="text-[12px]" style={{ color: group.color }}>
-                    <span className={group.icon}></span>
-                  </i>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b7684]">
-                    {group.name}
-                  </span>
-                </div>
+              return (
+                <div
+                  key={chart.id}
+                  onClick={() => toggle(chart.id, disabled)}
+                  className={`group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-md transition-colors ${
+                    disabled
+                      ? 'cursor-default'
+                      : 'cursor-pointer hover:bg-[#f8fafc]'
+                  }`}
+                >
+                  {/* Custom Checkbox matching the reference image */}
+                  <div
+                    className={`w-[16px] h-[16px] shrink-0 rounded-[3.5px] flex items-center justify-center transition-all ${
+                      disabled
+                        ? 'bg-[#b8c2cc] border border-[#b8c2cc] text-white'
+                        : isSelected
+                        ? 'bg-[#00995d] border border-[#00995d] text-white shadow-2xs'
+                        : 'bg-white border border-[#cfd6e0] group-hover:border-[#00995d]'
+                    }`}
+                  >
+                    {checked && (
+                      <svg
+                        className="w-2.5 h-2.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="2 6 4.8 9 10 3" />
+                      </svg>
+                    )}
+                  </div>
 
-                {groupCharts.map(chart => {
-                  const isAdded = existingChartIds.includes(chart.id);
-                  const checked = isAdded || selectedIds.has(chart.id);
-                  const disabled = isAdded || chart.comingSoon;
-
-                  return (
-                    <label
-                      key={chart.id}
-                      className={`flex items-center gap-2.5 py-2 px-1.5 -mx-1.5 rounded-md transition-colors ${
-                        disabled ? 'cursor-default' : 'cursor-pointer hover:bg-[#f8fafc]'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={disabled}
-                        onChange={() => toggle(chart.id)}
-                        className="w-[15px] h-[15px] shrink-0 rounded-[4px] border-[#cfd6e0] accent-[#f47920] cursor-pointer disabled:cursor-default"
-                      />
+                  {/* Widget Label */}
+                  <span
+                    className={`text-[13.5px] leading-snug flex-1 min-w-0 truncate select-none ${
+                      disabled
+                        ? 'text-[#8a93a0] font-normal'
+                        : isSelected
+                        ? 'text-[#103554] font-semibold'
+                        : 'text-[#334155] font-normal group-hover:text-[#103554]'
+                    }`}
+                    title={`${chart.title}${chart.isClientWidget ? ' (Curso presencial)' : ''}`}
+                  >
+                    {chart.title}
+                    {chart.isClientWidget && (
                       <span
-                        className={`text-[13.5px] font-medium flex-1 min-w-0 truncate ${
-                          disabled ? 'text-[#a7afba]' : 'text-[#334155]'
+                        className={`ml-1 font-medium ${
+                          disabled ? 'text-[#8a93a0]' : 'text-[#64748b]'
                         }`}
                       >
-                        {chart.title}
+                        (Curso presencial)
                       </span>
-                      {chart.comingSoon && (
-                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-[#8a93a0] bg-[#f1f3f6] px-1.5 py-0.5 rounded">
-                          Em breve
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-            );
-          })}
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="p-5 pt-4 flex items-center gap-3 shrink-0">
+        <div className="p-6 pt-4 flex items-center gap-3 shrink-0 bg-white border-t border-[#f1f4f8]">
           <button
             onClick={handleAddSelected}
             disabled={selectedIds.size === 0}
-            className="flex-[1.6] h-11 rounded-full bg-[#00995d] hover:bg-[#00824f] disabled:bg-[#bfe3d1] disabled:cursor-not-allowed text-[#eef7f4] text-[13.5px] font-bold transition-colors cursor-pointer active:scale-[0.98]"
+            className="flex-[1.4] h-11 rounded-full bg-[#00995d] hover:bg-[#00824f] disabled:bg-[#00995d]/50 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[13.5px] font-bold transition-all cursor-pointer shadow-xs active:scale-[0.98]"
           >
             Adicionar selecionados
           </button>
           <button
             onClick={onClose}
-            className="flex-1 h-11 rounded-full bg-[#e7eaee] hover:bg-[#dde1e7] text-[#4a5462] text-[13.5px] font-bold transition-colors cursor-pointer"
+            className="flex-1 h-11 rounded-full bg-[#eaedf0] hover:bg-[#dfe3e8] text-[#4a5462] text-[13.5px] font-bold transition-colors cursor-pointer"
           >
             Cancelar
           </button>

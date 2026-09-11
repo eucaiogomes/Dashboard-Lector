@@ -11,7 +11,7 @@ export default function App() {
 
   // "Ver Indicadores"/"Ver Detalhes"-style CTAs elsewhere in the app used to jump to a
   // standalone Indicadores T&D screen — that screen now lives inside the Dashboard as panels
-  // (see DashboardView's "Adicionar Painel"), so these CTAs instead ask the Dashboard to
+  // (see DashboardView's PANEL_TEMPLATES), so these CTAs instead ask the Dashboard to
   // focus (or create) the matching panel. `token` forces a re-focus even when the same view
   // is requested twice in a row.
   const [dashboardFocusRequest, setDashboardFocusRequest] = useState<{ view: ViewType; token: number } | null>(null);

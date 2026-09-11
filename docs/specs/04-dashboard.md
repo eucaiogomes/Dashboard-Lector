@@ -23,9 +23,11 @@ A pílula de período é **só visual**: não abre seletor e `selectedPeriod` nu
 
 | Tipo | Como surge | Conteúdo | Persistido |
 |---|---|---|---|
-| **Padrão** (`id = 'default'`, nome "Dashboard") | Sempre existe na primeira carga | 10 widgets de `DEFAULT_LAYOUT_SPEC` | Nome, ordem e layout. Cards recriados do spec |
-| **Modelo** (`templateId` ∈ `ViewType`) | "Adicionar Painel" ou CTA "Ver Indicadores" | `IndicadoresFullPageView` da view; widgets extras, se adicionados, aparecem abaixo | Nome, ordem, templateId, layout. **Widgets extras não** |
-| **Em branco** | Só aparece ao recarregar um painel com `templateId` desconhecido | Grid vazio + estado vazio | Nome, ordem, layout. **Cards não** |
+| **Padrão** (`id = 'default'`, nome "Dashboard") | Sempre existe na primeira carga | **Em branco** (estado vazio com "Adicionar gráficos") | Nome, ordem, cards e layout |
+| **Em branco** | "Adicionar Painel" (sem modal; nome "Painel N", renomeável) | Em branco (estado vazio com "Adicionar gráficos") | Nome, ordem, cards e layout |
+| **Modelo** (`templateId` ∈ `ViewType`) | Só pela CTA "Ver Indicadores" | Widgets do modelo em `TEMPLATE_LAYOUT_SPECS` | Nome, ordem, templateId, cards e layout |
+
+Cards são salvos por painel em `lector_dashboard_cards_v1_<panelId>` (só `catalogId`, tipo e categoria); os dados são regerados pelo catálogo ao recarregar.
 
 ## 4. Regras
 
@@ -33,13 +35,13 @@ A pílula de período é **só visual**: não abre seletor e `selectedPeriod` nu
 |---|---|
 | RN-D-01 | Sempre existe ≥ 1 painel. O × de remover só aparece com 2+ painéis, no hover da aba. |
 | RN-D-02 | Clique na aba ativa o painel. **Duplo clique renomeia**: Enter confirma, Esc cancela, nome vazio é ignorado e o texto passa por trim. |
-| RN-D-03 | "Adicionar Painel" abre um modal de **multi-seleção** entre os 3 modelos (Institucionais, Internos, Centro de Custo). Cria uma aba por modelo marcado e ativa a última. Duplicatas são permitidas. |
+| RN-D-03 | "Adicionar Painel" **não abre modal**: cria direto um painel em branco ("Painel N", primeiro número livre) e o ativa. Dentro dele, o estado vazio oferece "Adicionar gráficos", que abre o mesmo catálogo de RN-D-05. |
 | RN-D-04 | Uma CTA externa (`App.goToIndicadoresPanel(view)`) muda a sidebar para Dashboard e **foca o painel-modelo existente** daquela view ou cria um. É idempotente por `token` (protege contra o duplo efeito do StrictMode). |
-| RN-D-05 | "Adicionar Gráfico" abre o catálogo agrupado por `CHART_GROUPS`, com multi-seleção. Itens já no painel aparecem **marcados e desabilitados**; itens `comingSoon` aparecem desabilitados com o selo "Em breve". O botão "Adicionar selecionados" fica desabilitado sem seleção. |
+| RN-D-05 | "Adicionar Gráfico" abre o modal "Adicionar Widget" seguindo o modelo visual da plataforma Lector, com multi-seleção de todos os widgets nativos e widgets do cliente identificados com "(Curso presencial)". Itens já presentes no painel aparecem marcados e desabilitados para evitar duplicidade. O botão "Adicionar selecionados" adiciona os novos widgets selecionados ao painel ativo. |
 | RN-D-06 | Widget novo entra com 4×8 e ocupa a última linha até formar 3 por linha, depois abre uma linha nova (`reconcileLayout`). |
 | RN-D-07 | Tamanho entre 3–12 colunas e 5–20 linhas. Redimensiona por qualquer borda ou canto. Arrasta pelo card inteiro, exceto em `select`, `button` e `.no-drag`. |
 | RN-D-08 | Com largura < 1024px: coluna única, sem arrastar nem redimensionar. A altura de cada card vem do layout salvo. |
-| RN-D-09 | "Restaurar Padrão" no painel `default` recria os 10 widgets e o layout padrão. Em outro painel, esvazia os widgets (não afeta a tela de um painel-modelo). |
+| RN-D-09 | "Restaurar Padrão" num painel-modelo recria os widgets e o layout do modelo. Em qualquer outro painel (inclusive o `default`), esvazia os widgets. |
 | RN-D-10 | Remover widget: botão × no canto superior direito, visível no hover (widgets especiais). |
 | RN-D-11 | "Ver Detalhes" aparece no rodapé do widget quando existe `REPORT_DEFINITIONS[catalogId]` e abre o `ReportDetailOverlay`. |
 | RN-D-12 | Tela cheia = container `fixed inset-0 z-50` (não usa a Fullscreen API). O botão alterna. |
@@ -92,9 +94,10 @@ Usado quando um item do catálogo **não** está em `SPECIAL_WIDGETS`. Cabeçalh
 
 ## 8. Checklist de regressão (manual)
 
-- [ ] Primeira carga (localStorage limpo) mostra o painel "Dashboard" com os 10 widgets no layout padrão.
+- [ ] Primeira carga (localStorage limpo) mostra o painel "Dashboard" em branco, com o botão "Adicionar gráficos".
+- [ ] Adicionar gráficos num painel e recarregar mantém os gráficos (tipo e categoria inclusos) naquele painel.
 - [ ] Arrastar e redimensionar um widget e recarregar mantém a posição.
-- [ ] Adicionar Painel → Internos + CC cria 2 abas e ativa a última; recarregar mantém as abas.
+- [ ] Adicionar Painel cria na hora um "Painel N" em branco, sem modal, e o ativa; recarregar mantém as abas.
 - [ ] Renomear aba (duplo clique, Enter) e recarregar mantém o nome; Esc cancela.
 - [ ] Remover aba ativa ativa a primeira restante; não dá para remover a última.
 - [ ] Remover widget e depois "Restaurar Padrão" traz o widget de volta.

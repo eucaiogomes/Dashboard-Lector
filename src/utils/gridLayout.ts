@@ -1,4 +1,5 @@
 import type { LayoutItem } from 'react-grid-layout';
+import { SPECIAL_WIDGET_IDS } from '../data/dashboardCatalog';
 
 // Grid metrics: 12 columns, 40px row unit, 20px gutter (matches the card grid's previous gap-5 spacing)
 export const GRID_COLS = 12;
@@ -18,6 +19,42 @@ export const MAX_H = 20;
 export const DEFAULT_COLS_PER_ROW = 3;
 export const DEFAULT_W = GRID_COLS / DEFAULT_COLS_PER_ROW;
 export const DEFAULT_H = 8;
+
+// As faixas de KPI ("Resumo Geral") nascem largura total + baixas — mesmo tamanho já usado
+// nos painéis-modelo (TEMPLATE_LAYOUT_SPECS) — em vez do tamanho genérico de 1/3 da linha,
+// que deixava esses cards estreitos, altos e com muita área em branco.
+const CUSTOM_DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
+  [SPECIAL_WIDGET_IDS.institucionaisKpis]: { w: GRID_COLS, h: 6 },
+  [SPECIAL_WIDGET_IDS.internosKpis]: { w: GRID_COLS, h: 6 }
+};
+
+// Piso de redimensionamento dessas faixas — mais frouxo que o tamanho de nascimento acima,
+// só o suficiente para não voltar a ficar estreito/truncado como antes.
+const CUSTOM_MIN_SIZE: Record<string, { w: number; h: number }> = {
+  [SPECIAL_WIDGET_IDS.institucionaisKpis]: { w: 6, h: 5 },
+  [SPECIAL_WIDGET_IDS.internosKpis]: { w: 6, h: 5 }
+};
+
+// Card ids are `card_${catalogId}_${timestamp}_${idx}` (from "Adicionar Gráfico") or
+// `card_${catalogId}` (painéis-modelo) — nunca o catalogId puro — então a busca precisa
+// casar por prefixo, não por chave direta. Também serve para o catalogId puro (usado pelos
+// painéis-modelo), já que ele bate na primeira condição.
+const matchCatalogId = (cardId: string, catalogId: string): boolean =>
+  cardId === catalogId || cardId.startsWith(`card_${catalogId}_`) || cardId === `card_${catalogId}`;
+
+export const customSizeForCardId = (cardId: string): { w: number; h: number } | undefined => {
+  for (const catalogId of Object.keys(CUSTOM_DEFAULT_SIZE)) {
+    if (matchCatalogId(cardId, catalogId)) return CUSTOM_DEFAULT_SIZE[catalogId];
+  }
+  return undefined;
+};
+
+export const customMinSizeForCardId = (cardId: string): { w: number; h: number } | undefined => {
+  for (const catalogId of Object.keys(CUSTOM_MIN_SIZE)) {
+    if (matchCatalogId(cardId, catalogId)) return CUSTOM_MIN_SIZE[catalogId];
+  }
+  return undefined;
+};
 
 const STORAGE_KEY = 'lector_dashboard_layout_v1';
 
@@ -110,13 +147,63 @@ export function saveActivePanelId(panelId: string): void {
   }
 }
 
-const withLimits = (item: LayoutItem): LayoutItem => ({
-  ...item,
-  minW: MIN_W,
-  minH: MIN_H,
-  maxW: MAX_W,
-  maxH: MAX_H
-});
+// --- Panel cards -----------------------------------------------------------------------
+// Every panel starts blank and is filled by the user via "Adicionar Gráfico", so each
+// panel's cards persist too — only what's needed to rebuild a card (which catalog chart,
+// its chosen type and category); the chart data itself is regenerated from the catalog.
+
+export interface StoredCardMeta {
+  id: string;
+  catalogId: string;
+  chartType: string;
+  selectedCategory: string;
+}
+
+const CARDS_KEY = 'lector_dashboard_cards_v1';
+
+const cardsStorageKey = (panelId: string): string => `${CARDS_KEY}_${panelId}`;
+
+export function loadStoredCards(panelId: string): StoredCardMeta[] {
+  try {
+    const raw = localStorage.getItem(cardsStorageKey(panelId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is StoredCardMeta =>
+        item && typeof item.id === 'string' && typeof item.catalogId === 'string'
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function saveStoredCards(cards: StoredCardMeta[], panelId: string): void {
+  try {
+    localStorage.setItem(cardsStorageKey(panelId), JSON.stringify(cards));
+  } catch {
+    // ignore
+  }
+}
+
+export function clearStoredCards(panelId: string): void {
+  try {
+    localStorage.removeItem(cardsStorageKey(panelId));
+  } catch {
+    // ignore
+  }
+}
+
+const withLimits = (item: LayoutItem): LayoutItem => {
+  const customMin = customMinSizeForCardId(item.i);
+  return {
+    ...item,
+    minW: customMin ? customMin.w : MIN_W,
+    minH: customMin ? customMin.h : MIN_H,
+    maxW: MAX_W,
+    maxH: MAX_H
+  };
+};
 
 /** Deterministic 3-per-row layout used for the initial/default card set. */
 export function buildDefaultLayout(cardIds: string[]): LayoutItem[] {
@@ -154,18 +241,31 @@ export function reconcileLayout(currentLayout: LayoutItem[], cardIds: string[]):
   const trailingRowSlots = kept.filter(
     item => item.y === trailingRowY && item.w === DEFAULT_W && item.h === DEFAULT_H
   ).length;
-  const startSlot = trailingRowSlots > 0 && trailingRowSlots < DEFAULT_COLS_PER_ROW ? trailingRowSlots : 0;
-  const startY = startSlot > 0 ? trailingRowY : bottomY;
+  let slot = trailingRowSlots > 0 && trailingRowSlots < DEFAULT_COLS_PER_ROW ? trailingRowSlots : 0;
+  let startY = slot > 0 ? trailingRowY : bottomY;
 
-  const added = missingIds.map((id, i) => {
-    const slot = startSlot + i;
-    return withLimits({
+  const added: LayoutItem[] = [];
+
+  missingIds.forEach(id => {
+    const custom = customSizeForCardId(id);
+    if (custom) {
+      // Widgets com tamanho próprio (ex.: faixas de KPI) sempre começam sua própria linha,
+      // largura total — nunca dividem a linha com o layout genérico de 3-por-linha.
+      const y = slot > 0 ? startY + DEFAULT_H : startY;
+      added.push(withLimits({ i: id, x: 0, y, w: custom.w, h: custom.h }));
+      startY = y + custom.h;
+      slot = 0;
+      return;
+    }
+
+    added.push(withLimits({
       i: id,
       x: (slot % DEFAULT_COLS_PER_ROW) * DEFAULT_W,
       y: startY + Math.floor(slot / DEFAULT_COLS_PER_ROW) * DEFAULT_H,
       w: DEFAULT_W,
       h: DEFAULT_H
-    });
+    }));
+    slot += 1;
   });
 
   return [...kept, ...added];
