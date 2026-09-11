@@ -258,13 +258,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   // persist to localStorage and are restored here.
   const [panels, setPanels] = useState<DashboardPanel[]>(() => {
     const storedMeta = loadStoredPanels();
-    const metas: StoredPanelMeta[] =
-      storedMeta.length > 0
-        ? storedMeta
-        : [
-            { id: DEFAULT_PANEL_ID, name: 'Dashboard' },
-            { id: 'panel_2', name: 'Painel 2' }
-          ];
+
+    // Primeiro acesso (nada salvo ainda): as duas abas padrão já nascem preenchidas com o
+    // painel-modelo de Institucionais/Internos — não em branco — para dar uma tela útil de
+    // cara, e com templateId setado para casar com o dedup do focusViewRequest (senão um
+    // "Ver Indicadores" criaria uma segunda aba duplicada com o mesmo nome).
+    if (storedMeta.length === 0) {
+      const defaultTemplates: { id: string; view: ViewType }[] = [
+        { id: DEFAULT_PANEL_ID, view: 'Treinamentos Institucionais' },
+        { id: 'panel_2', view: 'Treinamentos Internos' }
+      ];
+
+      return defaultTemplates.map(({ id, view }) => {
+        const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(view, INITIAL_PERIOD);
+        return {
+          id,
+          name: view,
+          templateId: view,
+          cards: templateCards,
+          layout: templateLayout
+        };
+      });
+    }
+
+    const metas: StoredPanelMeta[] = storedMeta;
 
     return metas.map(meta => {
       const panelCards = restoreCards(loadStoredCards(meta.id), INITIAL_PERIOD);
