@@ -259,7 +259,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   const [panels, setPanels] = useState<DashboardPanel[]>(() => {
     const storedMeta = loadStoredPanels();
     const metas: StoredPanelMeta[] =
-      storedMeta.length > 0 ? storedMeta : [{ id: DEFAULT_PANEL_ID, name: 'Dashboard' }];
+      storedMeta.length > 0
+        ? storedMeta
+        : [
+            { id: DEFAULT_PANEL_ID, name: 'Dashboard' },
+            { id: 'panel_2', name: 'Painel 2' }
+          ];
 
     return metas.map(meta => {
       const panelCards = restoreCards(loadStoredCards(meta.id), INITIAL_PERIOD);
