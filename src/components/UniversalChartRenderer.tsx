@@ -574,15 +574,15 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
     const maxSliceValue = Math.max(...slices.map(s => s.value), 1);
 
     return (
-      <div className="w-full h-full flex-1 min-h-0 flex flex-col sm:flex-row items-center gap-5 sm:gap-10 overflow-hidden">
+      <div className="w-full h-full flex-1 min-h-0 flex flex-col @[380px]:flex-row items-center gap-5 @[380px]:gap-10 overflow-hidden @container">
         <DonutChart
           key={chartType}
           slices={slices}
           showPercentLabels={false}
-          outerClassName="w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] md:w-[196px] md:h-[196px]"
-          holeClassName="w-[109px] h-[109px] sm:w-[133px] sm:h-[133px] md:w-[153px] md:h-[153px]"
+          outerClassName="w-[140px] h-[140px] @[380px]:w-[170px] @[380px]:h-[170px] @[520px]:w-[196px] @[520px]:h-[196px]"
+          holeClassName="w-[109px] h-[109px] @[380px]:w-[133px] @[380px]:h-[133px] @[520px]:w-[153px] @[520px]:h-[153px]"
         >
-          <div className="text-[24px] sm:text-[28px] font-extrabold text-[#004e4c] leading-none">
+          <div className="text-[24px] @[380px]:text-[28px] font-extrabold text-[#004e4c] leading-none">
             {total.toLocaleString('pt-BR')}
           </div>
           <div className="text-[9.5px] font-bold text-[#8a93a0] mt-1 tracking-wide text-center px-2">

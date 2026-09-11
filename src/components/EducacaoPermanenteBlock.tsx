@@ -75,72 +75,81 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
           </div>
         </div>
 
-        {/* Responsive KPI Grid: 4 columns when wide, 2 columns when narrow */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 flex-1 items-center">
+        {/* Grade de KPIs — mesmo padrão "bento" do Resumo Geral de Treinamentos (KPIs):
+            card branco próprio, sombra verde suave, badge de ícone e número em destaque. */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 flex-1">
           {/* Colaboradores */}
-          <div className="flex flex-col items-center text-center gap-2 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
-              Colaboradores
-            </span>
-            <div className="flex items-center gap-2.5">
-              <i className="icon-participants text-[24px] text-[#004e4c]"></i>
-              <div className="text-left text-[12px] text-[#334155] leading-snug">
-                <div>
-                  Elegíveis: <span className="font-bold text-[#004e4c]">{r.colaboradoresElegiveis}</span>
-                </div>
-                <div>
-                  Treinados: <span className="font-bold text-[#004e4c]">{r.colaboradoresTreinados}</span>
-                </div>
+          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
+                <i className="icon-participants text-[15px] text-[#00995d]"></i>
               </div>
+              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
+                Colaboradores
+              </div>
+            </div>
+            <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
+              {r.colaboradoresTreinados}
+            </div>
+            <div className="text-[11px] text-[#6b7684]">
+              de {r.colaboradoresElegiveis} elegíveis
             </div>
           </div>
 
           {/* Adesão Mensal */}
-          <div className="flex flex-col items-center text-center gap-1.5 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
-              Adesão Mensal
-            </span>
-            <div>
-              <div className="text-[26px] font-extrabold text-[#004e4c] leading-none">
-                {r.adesaoMensalPct}%
+          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
+                <i className="icon-performance text-[15px] text-[#00995d]"></i>
               </div>
-              <div className="text-[10px] italic font-semibold text-[#c07a10] mt-0.5">
-                Meta {r.adesaoMetaPct}%
+              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
+                Adesão Mensal
               </div>
             </div>
+            <div className="flex items-baseline gap-1">
+              <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
+                {r.adesaoMensalPct}
+              </div>
+              <div className="text-[14px] text-[#8a93a0] font-medium">%</div>
+            </div>
+            <div className="text-[11px] font-semibold text-[#8a5a00]">Meta {r.adesaoMetaPct}%</div>
           </div>
 
           {/* Quantidade de Turmas */}
-          <div className="flex flex-col items-center text-center gap-2 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
-              Quantidade de Turmas
-            </span>
-            <div className="flex items-center gap-2.5">
-              <i className="icon-presential-lesson text-[24px] text-[#004e4c]"></i>
-              <div className="text-left text-[12px] text-[#334155] leading-snug">
-                <div>
-                  Planejadas: <span className="font-bold text-[#004e4c]">{String(r.turmasPlanejadas).padStart(2, '0')}</span>
-                </div>
-                <div>
-                  Executadas: <span className="font-bold text-[#004e4c]">{String(r.turmasExecutadas).padStart(2, '0')}</span>
-                </div>
+          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
+                <i className="icon-presential-lesson text-[15px] text-[#00995d]"></i>
               </div>
+              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
+                Quantidade de Turmas
+              </div>
+            </div>
+            <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
+              {String(r.turmasExecutadas).padStart(2, '0')}
+            </div>
+            <div className="text-[11px] text-[#6b7684]">
+              de {String(r.turmasPlanejadas).padStart(2, '0')} planejadas
             </div>
           </div>
 
           {/* Esforço Extra */}
-          <div className="flex flex-col items-center text-center gap-1.5 p-2 rounded bg-[#f8fafc] border border-[#edf2f7]">
-            <span className="bg-[#004e4c] text-[#eef7f4] text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-full">
-              Esforço Extra
-            </span>
-            <div>
-              <div className="text-[26px] font-extrabold text-[#004e4c] leading-none">
-                {r.esforcoExtraPct}%
+          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
+                <i className="icon-checked text-[15px] text-[#00995d]"></i>
               </div>
-              <p className="text-[9px] italic text-[#8a93a0] mt-0.5 max-w-[140px] leading-tight">
-                Além do planejamento habitual
-              </p>
+              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
+                Esforço Extra
+              </div>
             </div>
+            <div className="flex items-baseline gap-1">
+              <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
+                {r.esforcoExtraPct}
+              </div>
+              <div className="text-[14px] text-[#8a93a0] font-medium">%</div>
+            </div>
+            <div className="text-[11px] text-[#6b7684]">Além do planejamento habitual</div>
           </div>
         </div>
 

@@ -513,20 +513,20 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     });
 
     return (
-      <div ref={containerRef} className="w-full h-full py-4 flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+      <div ref={containerRef} className="w-full h-full py-4 flex flex-col @[380px]:flex-row items-center gap-6 @[380px]:gap-10 @container">
         {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
             de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
         <DonutChart
           slices={slices.map(s => ({ color: s.color || '#004e4c', value: s.value }))}
           showPercentLabels={false}
-          outerClassName="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] md:w-[204px] md:h-[204px]"
-          holeClassName="w-[84px] h-[84px] sm:w-[101px] sm:h-[101px] md:w-[115px] md:h-[115px]"
+          outerClassName="w-[150px] h-[150px] @[380px]:w-[180px] @[380px]:h-[180px] @[520px]:w-[204px] @[520px]:h-[204px]"
+          holeClassName="w-[84px] h-[84px] @[380px]:w-[101px] @[380px]:h-[101px] @[520px]:w-[115px] @[520px]:h-[115px]"
         >
           <motion.span
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.7, duration: 0.3 }}
-            className="text-[20px] sm:text-[22px] md:text-[24px] font-black text-[#004e4c] leading-none"
+            className="text-[20px] @[380px]:text-[22px] @[520px]:text-[24px] font-black text-[#004e4c] leading-none"
           >
             {total}
           </motion.span>
@@ -534,7 +534,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.8, duration: 0.3 }}
-            className="text-[10px] sm:text-[10.5px] text-[#8a93a0] font-medium uppercase mt-0.5"
+            className="text-[10px] @[380px]:text-[10.5px] text-[#8a93a0] font-medium uppercase mt-0.5"
           >
             {card.unit || 'Total'}
           </motion.span>

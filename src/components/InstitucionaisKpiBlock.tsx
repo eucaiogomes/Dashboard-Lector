@@ -69,7 +69,7 @@ export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ 
         {simulatedData.kpis.map((kpi, index) => (
           <div
             key={index}
-            className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 @[420px]:p-4 flex flex-col justify-between gap-2.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5 min-w-0"
+            className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 @[420px]:p-4 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5 min-w-0"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 @[420px]:w-9 @[420px]:h-9 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">

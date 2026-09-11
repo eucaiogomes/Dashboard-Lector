@@ -833,7 +833,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           </div>
           <h3 className="text-base font-bold text-[#004e4c]">Este painel está em branco</h3>
           <p className="text-xs text-[#6b7684] max-w-md mx-auto mt-1 mb-4">
-            Clique em "Adicionar gráficos" e escolha quais dos {CHART_CATALOG.length} gráficos dos Indicadores T&amp;D deseja exibir neste painel.
+            Clique em "Adicionar gráficos".
           </p>
           <button
             onClick={() => setShowAddModal(true)}

@@ -688,9 +688,9 @@ export const CHART_CATALOG: CatalogChartDef[] = [
     isClientWidget: false,
     generateData: () => ({
       data: [
-        { label: 'Concluídas c/ Certificado', value: 1845, color: '#004e4c' },
-        { label: 'Concluídas s/ Certificado', value: 248, color: '#f47920' },
-        { label: 'Canceladas', value: 157, color: '#a7afba' }
+        { label: 'Concluídas c/ Certificado', value: 1845, color: '#0f6b3f' },
+        { label: 'Concluídas s/ Certificado', value: 248, color: '#d99a24' },
+        { label: 'Canceladas', value: 157, color: '#a32020' }
       ],
       maxScale: 2250,
       ticks: [0, 1000, 2000]
