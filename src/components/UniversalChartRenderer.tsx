@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ChartTypeOption } from './ChartTypeSelector';
 import { DonutChart } from './DonutChart';
+import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER } from '../utils/chartColors';
 
 export interface UniversalChartDataPoint {
   label: string;
@@ -111,8 +112,10 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                 const hPct = Math.min(100, Math.max(4, (item.value / maxAll) * 100));
                 const hSecPct =
                   item.valueSecondary !== undefined ? Math.min(100, Math.max(4, (item.valueSecondary / maxAll) * 100)) : 0;
-                const barColor = item.color || primaryColor;
                 const isHovered = hoverIdx === idx;
+                // Coluna é sempre verde sólido — sem gradiente e sem herdar cores por item,
+                // para manter um padrão único em todo gráfico de Coluna do Dashboard.
+                const barColor = isHovered ? COLUNA_PRIMARY_GREEN_HOVER : COLUNA_PRIMARY_GREEN;
 
                 return (
                   <div key={`${item.label}-${idx}`} className="flex flex-col items-center justify-end h-full flex-1 max-w-[42px] group">
@@ -131,13 +134,13 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                       )}
                       <div
                         key={`${chartType}-pri-${item.label}-${item.value}`}
-                        className={`chart-grow-h relative transition-[opacity,background] ${
+                        className={`chart-grow-h relative transition-colors ${
                           item.valueSecondary !== undefined ? 'w-1/2 max-w-[9px]' : 'w-full max-w-[18px]'
                         } rounded-t-[3px]`}
                         style={{
                           height: `${hPct}%`,
                           animationDelay: `${idx * 30 + 60}ms`,
-                          background: isHovered ? barColor : `linear-gradient(180deg, ${barColor} 0%, ${barColor}77 100%)`
+                          backgroundColor: barColor
                         }}
                         onMouseEnter={() => setHoverIdx(idx)}
                         onFocus={() => setHoverIdx(idx)}
@@ -212,7 +215,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
             ))}
           </div>
 
-          <div className="relative h-full flex flex-col justify-center gap-[3px] overflow-y-auto pr-0.5 -mx-1">
+          <div className="h-full flex flex-col overflow-y-auto pr-0.5">
             {data.map((item, idx) => {
               const wPct = Math.min(100, Math.max(3, (item.value / maxAll) * 100));
               const wSecPct =
@@ -222,18 +225,20 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
               return (
                 <div
                   key={`${item.label}-${idx}`}
-                  className="flex items-center gap-2.5 text-[11px] group min-h-0 px-1 py-[3px] rounded-[5px] hover:bg-[#f8fafc] transition-colors"
+                  className="flex-1 min-h-[22px] flex items-stretch gap-2.5 text-[11px] group px-0.5 rounded-[5px] hover:bg-[#f8fafc] transition-colors"
                 >
                   <div
-                    className={`${labelColW} shrink-0 text-right text-[#4a5462] font-semibold truncate text-[10.5px] leading-tight`}
+                    className={`${labelColW} shrink-0 flex items-center justify-end text-right text-[#4a5462] font-semibold truncate text-[10.5px] leading-tight`}
                     title={item.label}
                   >
                     {item.label}
                   </div>
 
-                  <div className="flex-1 flex flex-col gap-[3px] min-w-[36px]">
+                  {/* A trilha ocupa toda a altura da linha e cresce junto com o card — só a
+                      espessura da barra (não o espaçamento entre linhas) aumenta ao redimensionar. */}
+                  <div className="flex-1 flex flex-col justify-center gap-[3px] min-w-[36px]">
                     {item.valueSecondary !== undefined && (
-                      <div className="h-1 overflow-hidden">
+                      <div className="h-1 shrink-0 overflow-hidden">
                         <div
                           key={`${chartType}-sec-${item.label}-${item.valueSecondary}`}
                           className="chart-grow-w h-full"
@@ -242,7 +247,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                         />
                       </div>
                     )}
-                    <div className="h-[10px] overflow-hidden">
+                    <div className="flex-1 max-h-[18px] min-h-[8px] overflow-hidden">
                       <div
                         key={`${chartType}-pri-${item.label}-${item.value}`}
                         className="chart-grow-w h-full group-hover:brightness-110"
@@ -256,7 +261,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
                     </div>
                   </div>
 
-                  <div className={`${valueColW} shrink-0 text-right text-[10.5px] font-bold text-[#004e4c] tabular-nums`}>
+                  <div className={`${valueColW} shrink-0 flex items-center justify-end text-right text-[10.5px] font-bold text-[#004e4c] tabular-nums`}>
                     {item.value.toLocaleString('pt-BR')}
                     <span className="text-[#8a93a0] font-semibold">
                       {unit && unit !== '%' ? ` ${unit}` : unit === '%' ? '%' : ''}
@@ -569,13 +574,13 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
 
     return (
       <div className="w-full h-full flex-1 min-h-0 @container">
-      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-5 @[380px]:gap-10 overflow-hidden">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-3 @[380px]:gap-5 overflow-hidden">
         <DonutChart
           key={chartType}
           slices={slices}
           showPercentLabels={false}
-          outerClassName="w-[140px] h-[140px] @[380px]:w-[170px] @[380px]:h-[170px] @[520px]:w-[196px] @[520px]:h-[196px]"
-          holeClassName="w-[109px] h-[109px] @[380px]:w-[133px] @[380px]:h-[133px] @[520px]:w-[153px] @[520px]:h-[153px]"
+          outerClassName="w-[190px] h-[190px] @[380px]:w-[230px] @[380px]:h-[230px] @[520px]:w-[264px] @[520px]:h-[264px]"
+          holeClassName="w-[148px] h-[148px] @[380px]:w-[179px] @[380px]:h-[179px] @[520px]:w-[206px] @[520px]:h-[206px]"
         >
           <div className="text-[24px] @[380px]:text-[28px] font-extrabold text-[#004e4c] leading-none">
             {total.toLocaleString('pt-BR')}
@@ -586,7 +591,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
         </DonutChart>
 
         <div className="flex-1 min-w-0 w-full max-w-[380px] max-h-full overflow-y-auto">
-          <div className="grid grid-cols-[minmax(60px,180px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+          <div className="grid grid-cols-[minmax(60px,100px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
             <span>Categoria</span>
             <span className="text-right">Valor</span>
             <span className="text-right">% do total</span>
@@ -598,7 +603,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
               return (
                 <div
                   key={`${item.label}-${idx}`}
-                  className="chart-fade-in grid grid-cols-[minmax(60px,180px)_auto_auto] items-center gap-x-3 py-1.5"
+                  className="chart-fade-in grid grid-cols-[minmax(60px,100px)_auto_auto] items-center gap-x-3 py-1.5"
                   style={{ animationDelay: `${250 + idx * 40}ms` }}
                 >
                   <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">

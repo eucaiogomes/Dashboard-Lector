@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useState } from 'react';
 import { motion, useInView } from 'motion/react';
 import { DashboardCardItem } from '../data/dashboardCatalog';
 import { DonutChart } from './DonutChart';
+import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER } from '../utils/chartColors';
 
 interface DashboardChartRendererProps {
   card: DashboardCardItem;
@@ -208,8 +209,10 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
             const hSecPct = item.valueSecondary !== undefined
               ? Math.min(100, Math.max(4, (item.valueSecondary / maxScale) * 100))
               : 0;
-            const barColor = item.color || '#004e4c';
             const isHovered = hoverIdx === idx;
+            // Coluna é sempre verde sólido — sem gradiente e sem herdar cores por item,
+            // para manter um padrão único em todo gráfico de Coluna do Dashboard.
+            const barColor = isHovered ? COLUNA_PRIMARY_GREEN_HOVER : COLUNA_PRIMARY_GREEN;
 
             return (
               <motion.div
@@ -250,8 +253,8 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       duration: 0.65,
                       ease: [0.25, 0.46, 0.45, 0.94]
                     }}
-                    className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[3px] shadow-2xs relative overflow-visible transition-[background]`}
-                    style={{ background: isHovered ? barColor : `linear-gradient(180deg, ${barColor} 0%, ${barColor}77 100%)` }}
+                    className={`${item.valueSecondary !== undefined ? 'w-1/2 max-w-[14px]' : 'w-full max-w-[28px]'} rounded-t-[3px] shadow-2xs relative overflow-visible transition-colors`}
+                    style={{ backgroundColor: barColor }}
                     onMouseEnter={() => setHoverIdx(idx)}
                     onFocus={() => setHoverIdx(idx)}
                     tabIndex={0}
@@ -518,14 +521,14 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
 
     return (
       <div ref={containerRef} className="w-full h-full py-4 @container">
-      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-6 @[380px]:gap-10">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-3 @[380px]:gap-5">
         {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
             de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
         <DonutChart
           slices={slices.map(s => ({ color: s.color || '#004e4c', value: s.value }))}
           showPercentLabels={false}
-          outerClassName="w-[150px] h-[150px] @[380px]:w-[180px] @[380px]:h-[180px] @[520px]:w-[204px] @[520px]:h-[204px]"
-          holeClassName="w-[84px] h-[84px] @[380px]:w-[101px] @[380px]:h-[101px] @[520px]:w-[115px] @[520px]:h-[115px]"
+          outerClassName="w-[190px] h-[190px] @[380px]:w-[230px] @[380px]:h-[230px] @[520px]:w-[264px] @[520px]:h-[264px]"
+          holeClassName="w-[106px] h-[106px] @[380px]:w-[129px] @[380px]:h-[129px] @[520px]:w-[148px] @[520px]:h-[148px]"
         >
           <motion.span
             initial={{ opacity: 0 }}
@@ -548,7 +551,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
         {/* Legend Breakdown — tabela com categoria, valor e % com barrinha de proporção,
             mesmo padrão usado no gráfico de pizza das telas de Indicadores T&D. */}
         <div className="flex-1 min-h-0 min-w-0 w-full max-w-[380px] overflow-y-auto">
-          <div className="grid grid-cols-[minmax(60px,180px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+          <div className="grid grid-cols-[minmax(60px,100px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
             <span>Categoria</span>
             <span className="text-right">Valor</span>
             <span className="text-right">% do total</span>
@@ -562,7 +565,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   initial={{ opacity: 0, x: 20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 0.4 + idx * 0.08, duration: 0.35, ease: 'easeOut' }}
-                  className="grid grid-cols-[minmax(60px,180px)_auto_auto] items-center gap-x-3 py-1.5"
+                  className="grid grid-cols-[minmax(60px,100px)_auto_auto] items-center gap-x-3 py-1.5"
                 >
                   <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">
                     <motion.span
