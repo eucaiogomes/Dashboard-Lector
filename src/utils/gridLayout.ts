@@ -134,12 +134,12 @@ export interface StoredPanelMeta {
   templateId?: string;
 }
 
-// v3: o layout-modelo (tamanho/posição dos cards) dos dois painéis padrão ainda está sendo
+// v4: o layout-modelo (tamanho/posição dos cards) dos dois painéis padrão ainda está sendo
 // ajustado nesta mesma sessão — cada ajuste exige subir a versão de novo, senão quem já
-// gerou os painéis-modelo (a partir do v2) fica com o layout salvo antigo e nunca vê o novo,
-// já que o genesis só roda quando esta chave está vazia.
-const PANELS_KEY = 'lector_dashboard_panels_v3';
-const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v3';
+// gerou os painéis-modelo fica com o layout salvo antigo e nunca vê o novo, já que o genesis
+// só roda quando esta chave está vazia.
+const PANELS_KEY = 'lector_dashboard_panels_v4';
+const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v4';
 
 export function loadStoredPanels(): StoredPanelMeta[] {
   try {
