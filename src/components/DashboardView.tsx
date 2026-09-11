@@ -91,16 +91,19 @@ const PANEL_TEMPLATES: { id: ViewType; name: string }[] = [
 const TEMPLATE_LAYOUT_SPECS: Record<ViewType, LayoutSpec[]> = {
   'Treinamentos Institucionais': [
     { catalogId: SPECIAL_WIDGET_IDS.institucionaisKpis, x: 0, y: 0, w: 12, h: 6 },
-    { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 6, w: 6, h: 12 },
-    { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 6, w: 6, h: 6 },
-    { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 12, w: 6, h: 6 }
+    { catalogId: SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes, x: 0, y: 6, w: 12, h: 2 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisTabs, x: 0, y: 8, w: 6, h: 12 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisPercentual, x: 6, y: 8, w: 6, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.institucionaisAgenda, x: 6, y: 14, w: 6, h: 6 },
+    { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 20, w: 12, h: 11 }
   ],
   'Treinamentos Internos': [
     { catalogId: SPECIAL_WIDGET_IDS.internosKpis, x: 0, y: 0, w: 12, h: 6 },
     { catalogId: SPECIAL_WIDGET_IDS.internosEvolucao, x: 0, y: 6, w: 4, h: 12 },
     { catalogId: SPECIAL_WIDGET_IDS.internosAtivosTreinados, x: 4, y: 6, w: 4, h: 6 },
     { catalogId: SPECIAL_WIDGET_IDS.internosTreinamentosHoras, x: 4, y: 12, w: 4, h: 6 },
-    { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 6, w: 4, h: 12 }
+    { catalogId: SPECIAL_WIDGET_IDS.internosRankingCargo, x: 8, y: 6, w: 4, h: 12 },
+    { catalogId: SPECIAL_WIDGET_IDS.educacaoPermanente, x: 0, y: 18, w: 12, h: 11 }
   ],
   'Por Centro de Custo': [
     { catalogId: SPECIAL_WIDGET_IDS.centroCustoTabela, x: 0, y: 0, w: 12, h: 9 }

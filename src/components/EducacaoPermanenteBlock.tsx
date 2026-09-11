@@ -18,7 +18,7 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
     educacaoPermanenteData.find(d => d.setor === selectedSetor) ?? educacaoPermanenteData[0];
 
   return (
-    <div className="bg-white border border-[#e4e8ee] rounded-[6px] shadow-2xs overflow-hidden h-full flex flex-col justify-between">
+    <div className="bg-white border border-[#e4e8ee] rounded-2xl shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] overflow-hidden h-full flex flex-col justify-between">
       {/* Header bar */}
       <div className="bg-[#004e4c] px-5 py-3 flex items-center justify-between gap-3 shrink-0 cursor-grab active:cursor-grabbing select-none">
         <h2 className="text-[13.5px] font-bold text-[#eef7f4] uppercase tracking-wide pointer-events-none select-none">
@@ -77,7 +77,7 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
 
         {/* Grade de KPIs — mesmo padrão "bento" do Resumo Geral de Treinamentos (KPIs):
             card branco próprio, sombra verde suave, badge de ícone e número em destaque. */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 flex-1">
+        <div className="grid grid-cols-2 gap-3 py-4 flex-1">
           {/* Colaboradores */}
           <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
             <div className="flex items-center gap-2">
@@ -115,24 +115,6 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
             <div className="text-[11px] font-semibold text-[#8a5a00]">Meta {r.adesaoMetaPct}%</div>
           </div>
 
-          {/* Quantidade de Turmas */}
-          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
-                <i className="icon-presential-lesson text-[15px] text-[#00995d]"></i>
-              </div>
-              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
-                Quantidade de Turmas
-              </div>
-            </div>
-            <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
-              {String(r.turmasExecutadas).padStart(2, '0')}
-            </div>
-            <div className="text-[11px] text-[#6b7684]">
-              de {String(r.turmasPlanejadas).padStart(2, '0')} planejadas
-            </div>
-          </div>
-
           {/* Esforço Extra */}
           <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
             <div className="flex items-center gap-2">
@@ -150,6 +132,24 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
               <div className="text-[14px] text-[#8a93a0] font-medium">%</div>
             </div>
             <div className="text-[11px] text-[#6b7684]">Além do planejamento habitual</div>
+          </div>
+
+          {/* Quantidade de Turmas */}
+          <div className="bg-white border border-[#e4e8ee] rounded-2xl p-3.5 flex flex-col justify-center gap-1.5 shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] transition-all hover:shadow-[0_14px_28px_-12px_rgba(0,78,76,0.5)] hover:-translate-y-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#cde3bb]/60 flex items-center justify-center shrink-0">
+                <i className="icon-presential-lesson text-[15px] text-[#00995d]"></i>
+              </div>
+              <div className="text-[10.5px] uppercase tracking-wide text-[#8a93a0] font-semibold leading-tight">
+                Quantidade de Turmas
+              </div>
+            </div>
+            <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
+              {String(r.turmasExecutadas).padStart(2, '0')}
+            </div>
+            <div className="text-[11px] text-[#6b7684]">
+              de {String(r.turmasPlanejadas).padStart(2, '0')} planejadas
+            </div>
           </div>
         </div>
 
