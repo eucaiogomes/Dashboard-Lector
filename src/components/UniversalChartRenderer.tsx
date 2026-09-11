@@ -344,7 +344,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
     const relY = (y: number) => `${(y / svgHeight) * 100}%`;
 
     return (
-      <div className="w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full h-full flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
         {hasSecondary && (
           <ChartLegend
             primaryColor={primaryColor}
@@ -354,7 +354,10 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
           />
         )}
 
-        <div className="flex-1 min-h-0 flex">
+        {/* Altura máxima no plot: em cards muito altos, "preserveAspectRatio=none" esticaria o
+            eixo Y muito mais que o X, transformando qualquer variação em picos exagerados
+            ("esticado"/"grotesco"). Travar a altura e centralizar mantém a curva proporcional. */}
+        <div className="flex-1 min-h-0 max-h-[240px] flex">
           {/* Y scale — plain HTML, fixed font size, so it never stretches with the plot below */}
           <div className="flex flex-col justify-between text-right pr-1.5 shrink-0 w-[22px]">
             {gridRatios.map(ratio => (

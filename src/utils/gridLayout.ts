@@ -36,7 +36,7 @@ const CUSTOM_DEFAULT_HEIGHT: Record<string, number> = {
   [SPECIAL_WIDGET_IDS.internosRankingCargo]: 12,
   [SPECIAL_WIDGET_IDS.centroCustoTabela]: 9,
   [SPECIAL_WIDGET_IDS.turmasExecucao]: 8,
-  [SPECIAL_WIDGET_IDS.educacaoPermanente]: 11,
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: 7,
   [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: 2
 };
 
