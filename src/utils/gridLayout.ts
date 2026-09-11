@@ -36,7 +36,7 @@ const CUSTOM_DEFAULT_HEIGHT: Record<string, number> = {
   [SPECIAL_WIDGET_IDS.internosRankingCargo]: 12,
   [SPECIAL_WIDGET_IDS.centroCustoTabela]: 9,
   [SPECIAL_WIDGET_IDS.turmasExecucao]: 8,
-  [SPECIAL_WIDGET_IDS.educacaoPermanente]: 7,
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: 9,
   [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: 2
 };
 
@@ -134,12 +134,12 @@ export interface StoredPanelMeta {
   templateId?: string;
 }
 
-// v2: bumped porque o significado de "nada salvo ainda" mudou — passou a nascer com os dois
-// painéis-modelo (Institucionais/Internos) já preenchidos, em vez de um painel em branco.
-// Sem essa troca de chave, quem já tinha usado o Dashboard antes dessa mudança (inclusive em
-// produção) continuaria vendo o painel antigo, nunca os dois novos.
-const PANELS_KEY = 'lector_dashboard_panels_v2';
-const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v2';
+// v3: o layout-modelo (tamanho/posição dos cards) dos dois painéis padrão ainda está sendo
+// ajustado nesta mesma sessão — cada ajuste exige subir a versão de novo, senão quem já
+// gerou os painéis-modelo (a partir do v2) fica com o layout salvo antigo e nunca vê o novo,
+// já que o genesis só roda quando esta chave está vazia.
+const PANELS_KEY = 'lector_dashboard_panels_v3';
+const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v3';
 
 export function loadStoredPanels(): StoredPanelMeta[] {
   try {
