@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState } from 'react';
 import { motion, useInView } from 'motion/react';
 import { DashboardCardItem } from '../data/dashboardCatalog';
 import { DonutChart } from './DonutChart';
-import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER } from '../utils/chartColors';
+import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER, CHART_CATEGORY_PALETTE } from '../utils/chartColors';
 
 interface DashboardChartRendererProps {
   card: DashboardCardItem;
@@ -507,12 +507,13 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
     const total = data.reduce((acc, d) => acc + d.value, 0) || 1;
     let accumulatedAngle = 0;
 
-    const slices = data.map(d => {
+    const slices = data.map((d, i) => {
       const pct = (d.value / total) * 100;
       const startAngle = accumulatedAngle;
       accumulatedAngle += pct;
       return {
         ...d,
+        color: d.color || CHART_CATEGORY_PALETTE[i % CHART_CATEGORY_PALETTE.length],
         pct: Math.round(pct),
         startAngle,
         endAngle: accumulatedAngle
@@ -525,7 +526,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
         {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
             de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
         <DonutChart
-          slices={slices.map(s => ({ color: s.color || '#004e4c', value: s.value }))}
+          slices={slices.map(s => ({ color: s.color, value: s.value }))}
           showPercentLabels={false}
           outerClassName="w-[190px] h-[190px] @[380px]:w-[230px] @[380px]:h-[230px] @[520px]:w-[264px] @[520px]:h-[264px]"
           holeClassName="w-[106px] h-[106px] @[380px]:w-[129px] @[380px]:h-[129px] @[520px]:w-[148px] @[520px]:h-[148px]"
@@ -551,7 +552,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
         {/* Legend Breakdown — tabela com categoria, valor e % com barrinha de proporção,
             mesmo padrão usado no gráfico de pizza das telas de Indicadores T&D. */}
         <div className="flex-1 min-h-0 min-w-0 w-full max-w-[380px] overflow-y-auto">
-          <div className="grid grid-cols-[minmax(60px,100px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+          <div className="grid grid-cols-[minmax(60px,100px)_minmax(40px,60px)_minmax(90px,115px)] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
             <span>Categoria</span>
             <span className="text-right">Valor</span>
             <span className="text-right">% do total</span>
@@ -565,7 +566,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                   initial={{ opacity: 0, x: 20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 0.4 + idx * 0.08, duration: 0.35, ease: 'easeOut' }}
-                  className="grid grid-cols-[minmax(60px,100px)_auto_auto] items-center gap-x-3 py-1.5"
+                  className="grid grid-cols-[minmax(60px,100px)_minmax(40px,60px)_minmax(90px,115px)] items-center gap-x-3 py-1.5"
                 >
                   <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">
                     <motion.span
@@ -573,7 +574,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                       animate={isInView ? { scale: 1 } : {}}
                       transition={{ delay: 0.5 + idx * 0.08, duration: 0.25, type: 'spring', stiffness: 400 }}
                       className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color || '#004e4c' }}
+                      style={{ backgroundColor: item.color }}
                     ></motion.span>
                     <span className="truncate" title={item.label}>
                       {item.label}
@@ -585,7 +586,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
                     <span className="w-10 h-1.5 rounded-full bg-[#eef1f5] overflow-hidden hidden sm:block">
                       <span
                         className="chart-grow-w block h-full rounded-full"
-                        style={{ width: `${barPct}%`, backgroundColor: item.color || '#004e4c', animationDelay: `${550 + idx * 40}ms` }}
+                        style={{ width: `${barPct}%`, backgroundColor: item.color, animationDelay: `${550 + idx * 40}ms` }}
                       />
                     </span>
                   </span>

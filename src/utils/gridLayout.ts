@@ -134,8 +134,12 @@ export interface StoredPanelMeta {
   templateId?: string;
 }
 
-const PANELS_KEY = 'lector_dashboard_panels_v1';
-const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v1';
+// v2: bumped porque o significado de "nada salvo ainda" mudou — passou a nascer com os dois
+// painéis-modelo (Institucionais/Internos) já preenchidos, em vez de um painel em branco.
+// Sem essa troca de chave, quem já tinha usado o Dashboard antes dessa mudança (inclusive em
+// produção) continuaria vendo o painel antigo, nunca os dois novos.
+const PANELS_KEY = 'lector_dashboard_panels_v2';
+const ACTIVE_PANEL_KEY = 'lector_dashboard_active_panel_v2';
 
 export function loadStoredPanels(): StoredPanelMeta[] {
   try {

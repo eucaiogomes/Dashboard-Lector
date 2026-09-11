@@ -1,7 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ChartTypeOption } from './ChartTypeSelector';
 import { DonutChart } from './DonutChart';
-import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER } from '../utils/chartColors';
+import { COLUNA_PRIMARY_GREEN, COLUNA_PRIMARY_GREEN_HOVER, CHART_CATEGORY_PALETTE } from '../utils/chartColors';
 
 export interface UniversalChartDataPoint {
   label: string;
@@ -21,21 +21,6 @@ interface UniversalChartRendererProps {
   secondaryColor?: string;
   heightPx?: number;
 }
-
-const PALETTE = [
-  '#004e4c',
-  '#f47920',
-  '#00995d',
-  '#1f8f78',
-  '#2a7b9b',
-  '#e65100',
-  '#5c6bc0',
-  '#7e57c2',
-  '#26a69a',
-  '#ab47bc',
-  '#d4e157',
-  '#ff7043'
-];
 
 const formatVal = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace('.', ',')}k` : `${v}`);
 
@@ -566,7 +551,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
       const pct = (d.value / total) * 100;
       const start = accum;
       accum += pct;
-      const color = d.color || PALETTE[i % PALETTE.length];
+      const color = d.color || CHART_CATEGORY_PALETTE[i % CHART_CATEGORY_PALETTE.length];
       return { ...d, color, start, end: accum };
     });
 
@@ -591,7 +576,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
         </DonutChart>
 
         <div className="flex-1 min-w-0 w-full max-w-[380px] max-h-full overflow-y-auto">
-          <div className="grid grid-cols-[minmax(60px,100px)_auto_auto] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
+          <div className="grid grid-cols-[minmax(60px,100px)_minmax(40px,60px)_minmax(90px,115px)] gap-x-3 text-[9.5px] uppercase tracking-wide text-[#8a93a0] font-bold pb-1.5 border-b border-[#f0f3f7]">
             <span>Categoria</span>
             <span className="text-right">Valor</span>
             <span className="text-right">% do total</span>
@@ -603,7 +588,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
               return (
                 <div
                   key={`${item.label}-${idx}`}
-                  className="chart-fade-in grid grid-cols-[minmax(60px,100px)_auto_auto] items-center gap-x-3 py-1.5"
+                  className="chart-fade-in grid grid-cols-[minmax(60px,100px)_minmax(40px,60px)_minmax(90px,115px)] items-center gap-x-3 py-1.5"
                   style={{ animationDelay: `${250 + idx * 40}ms` }}
                 >
                   <span className="flex items-center gap-1.5 min-w-0 text-[12px] text-[#4a5462] font-medium">
