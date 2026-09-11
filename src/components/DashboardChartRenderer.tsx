@@ -518,7 +518,7 @@ export const DashboardChartRenderer: React.FC<DashboardChartRendererProps> = ({ 
 
     return (
       <div ref={containerRef} className="w-full h-full py-4 @container">
-      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center gap-6 @[380px]:gap-10">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-6 @[380px]:gap-10">
         {/* Donut graphic — mesmo anel (conic-gradient com costura branca) e mesma animação
             de varredura angular (chart-donut-in) usados em todo gráfico Pizza/Rosca do app. */}
         <DonutChart

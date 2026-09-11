@@ -566,7 +566,7 @@ export const UniversalChartRenderer: React.FC<UniversalChartRendererProps> = ({
 
     return (
       <div className="w-full h-full flex-1 min-h-0 @container">
-      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center gap-5 @[380px]:gap-10 overflow-hidden">
+      <div className="w-full h-full flex flex-col @[380px]:flex-row items-center justify-center gap-5 @[380px]:gap-10 overflow-hidden">
         <DonutChart
           key={chartType}
           slices={slices}
