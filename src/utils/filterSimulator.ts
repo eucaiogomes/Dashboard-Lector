@@ -25,23 +25,32 @@ export function stringHash(str: string): number {
 export function getSimulatedData(
   view: ViewType,
   dateFilter: DateFilterValue,
-  activeFilters: Record<string, string>,
+  activeFilters: Record<string, string | string[]>,
   afastados: boolean
 ) {
   const { year, month, mode } = dateFilter;
-  const unidade = activeFilters['Unidades'] || 'Todas as unidades';
-  const tipoTreinamento = activeFilters['Tipo de Treinamento'] || 'Todos os tipos';
-  const gerente = activeFilters['Gerente'] || 'Todos';
-  const supervisor = activeFilters['Supervisor'] || 'Todos';
-  const cargo = activeFilters['Cargo'] || 'Todos';
-  const centroCusto = activeFilters['Centro de custo'] || 'Todos';
-  const gestor = activeFilters['Gestor'] || 'Todos';
-  const setor = activeFilters['Setor'] || activeFilters['setor'] || 'Todos';
-  const instrutor = activeFilters['Instrutor'] || activeFilters['instrutor'] || 'Todos';
-  const treinamento = activeFilters['Treinamento'] || activeFilters['treinamento'] || 'Todos';
+
+  const parseVal = (val: string | string[] | undefined): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (val === 'Todos' || val.endsWith(' Geral') || val.startsWith('Todas')) return [];
+    return [val];
+  };
+
+  const unidade = (typeof activeFilters['Unidades'] === 'string' ? activeFilters['Unidades'] : 'Todas as unidades') || 'Todas as unidades';
+  const tipoTreinamento = (typeof activeFilters['Tipo de Treinamento'] === 'string' ? activeFilters['Tipo de Treinamento'] : 'Todos os tipos') || 'Todos os tipos';
+  const gerente = (typeof activeFilters['Gerente'] === 'string' ? activeFilters['Gerente'] : 'Todos') || 'Todos';
+  const supervisor = (typeof activeFilters['Supervisor'] === 'string' ? activeFilters['Supervisor'] : 'Todos') || 'Todos';
+  const centroCusto = (typeof activeFilters['Centro de custo'] === 'string' ? activeFilters['Centro de custo'] : 'Todos') || 'Todos';
+  const gestor = (typeof activeFilters['Gestor'] === 'string' ? activeFilters['Gestor'] : 'Todos') || 'Todos';
+
+  const cargos = parseVal(activeFilters['Cargo'] || activeFilters['cargo']);
+  const setores = parseVal(activeFilters['Setor'] || activeFilters['setor']);
+  const instrutores = parseVal(activeFilters['Instrutor'] || activeFilters['instrutor']);
+  const treinamentos = parseVal(activeFilters['Treinamento'] || activeFilters['treinamento']);
 
   // Seed composite
-  const seedString = `${year}-${month}-${mode}-${unidade}-${tipoTreinamento}-${gerente}-${supervisor}-${cargo}-${centroCusto}-${gestor}-${afastados}-${setor}-${instrutor}-${treinamento}`;
+  const seedString = `${year}-${month}-${mode}-${unidade}-${tipoTreinamento}-${gerente}-${supervisor}-${cargos.slice().sort().join(',')}-${centroCusto}-${gestor}-${afastados}-${setores.slice().sort().join(',')}-${instrutores.slice().sort().join(',')}-${treinamentos.slice().sort().join(',')}`;
   const seed = stringHash(seedString);
 
   // Multipliers based on Unidade
@@ -61,12 +70,12 @@ export function getSimulatedData(
   let specificFilterMultiplier = 1.0;
   if (gerente !== 'Todos') specificFilterMultiplier *= 0.35;
   if (supervisor !== 'Todos') specificFilterMultiplier *= 0.25;
-  if (cargo !== 'Todos' && cargo !== 'Cargo Geral') specificFilterMultiplier *= 0.85;
   if (centroCusto !== 'Todos') specificFilterMultiplier *= 0.15;
   if (gestor !== 'Todos') specificFilterMultiplier *= 0.2;
-  if (setor !== 'Todos' && setor !== 'Setor Geral') specificFilterMultiplier *= 0.78;
-  if (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral') specificFilterMultiplier *= 0.72;
-  if (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral') specificFilterMultiplier *= 0.65;
+  if (cargos.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.9 - (cargos.length * 0.07));
+  if (setores.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.85 - (setores.length * 0.06));
+  if (instrutores.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.8 - (instrutores.length * 0.05));
+  if (treinamentos.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.75 - (treinamentos.length * 0.05));
 
   const totalMultiplier = Math.max(0.05, unitMultiplier * tipoMultiplier * specificFilterMultiplier);
 
@@ -208,10 +217,15 @@ export function getSimulatedData(
     };
   });
 
-  if (cargo !== 'Todos') {
-    jobPositions = jobPositions.filter(j => j.cargo === cargo);
+  if (cargos.length > 0) {
+    jobPositions = jobPositions.filter(j => cargos.includes(j.cargo));
     if (jobPositions.length === 0) {
-      jobPositions = [{ cargo, participantes: Math.round(1450 * totalMultiplier), ativos: 48, treinados: 39 }];
+      jobPositions = cargos.map(c => ({
+        cargo: c,
+        participantes: Math.round(1450 * totalMultiplier),
+        ativos: 48,
+        treinados: 39
+      }));
     }
   }
 
@@ -230,20 +244,20 @@ export function getSimulatedData(
     if (centroCusto !== 'Todos' && row.area !== centroCusto) return false;
     if (gestor !== 'Todos' && row.gestor !== gestor) return false;
     if (supervisor !== 'Todos' && row.supervisor !== supervisor) return false;
-    if (setor !== 'Todos' && setor !== 'Setor Geral' && row.area !== setor) return false;
-    if (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral' && row.instrutor !== instrutor) return false;
-    if (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral' && row.treinamento !== treinamento) return false;
+    if (setores.length > 0 && !setores.includes(row.area)) return false;
+    if (instrutores.length > 0 && !instrutores.includes(row.instrutor)) return false;
+    if (treinamentos.length > 0 && !treinamentos.includes(row.treinamento)) return false;
     return true;
   });
 
   if (costCenterRows.length === 0) {
     costCenterRows = [{
-      area: (setor !== 'Todos' && setor !== 'Setor Geral') ? setor : (centroCusto !== 'Todos' ? centroCusto : 'Centro Cirúrgico'),
+      area: setores.length > 0 ? setores[0] : (centroCusto !== 'Todos' ? centroCusto : 'Centro Cirúrgico'),
       gestor: gestor !== 'Todos' ? gestor : 'Ana Paula Ribeiro',
       supervisor: supervisor !== 'Todos' ? supervisor : 'M. Tavares',
-      treinamento: (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral') ? treinamento : (tipoTreinamento !== 'Todos os tipos' ? tipoTreinamento : 'Segurança do Paciente'),
+      treinamento: treinamentos.length > 0 ? treinamentos[0] : (tipoTreinamento !== 'Todos os tipos' ? tipoTreinamento : 'Segurança do Paciente'),
       aula: `Turma 01 · 15/${String(month + 1).padStart(2, '0')}`,
-      instrutor: (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral') ? instrutor : 'R. Menezes',
+      instrutor: instrutores.length > 0 ? instrutores[0] : 'R. Menezes',
       inscritos: Math.round(30 * totalMultiplier),
       realizaram: Math.round(25 * totalMultiplier),
       turmasPlanejadas: 3,

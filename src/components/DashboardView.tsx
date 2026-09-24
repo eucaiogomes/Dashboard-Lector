@@ -30,6 +30,7 @@ import { ReportDetailOverlay } from './ReportDetailOverlay';
 import { REPORT_DEFINITIONS } from '../data/reportDefinitions';
 import { ViewType, MonthData, TrainingTypeData, AgendaItem, InternalTraining, JobPositionData, CostCenterRow } from '../types';
 import { X, ChevronDown } from 'lucide-react';
+import { MultiSelectFilterDropdown } from './MultiSelectFilterDropdown';
 import { getSimulatedData, stringHash } from '../utils/filterSimulator';
 import { DateFilterValue } from './DateFilterPicker';
 import {
@@ -67,7 +68,7 @@ interface SpecialWidgetProps {
   treinamentosData?: InternalTraining[];
   cargosData?: JobPositionData[];
   rowsData?: CostCenterRow[];
-  selectedSetor?: string;
+  selectedSetor?: string | string[];
 }
 
 /** Maps each special-widget catalog id to the bespoke component that renders it, bypassing
@@ -275,7 +276,6 @@ const PERIOD_OPTIONS = [
 ];
 
 const SETOR_OPTIONS = [
-  'Setor Geral',
   'Centro Cirúrgico',
   'Centro Médico',
   'Faturamento',
@@ -288,7 +288,6 @@ const SETOR_OPTIONS = [
 ];
 
 const INSTRUTOR_OPTIONS = [
-  'Instrutor Geral',
   'Ana Paula Ribeiro',
   'C. Duarte',
   'Carlos E. Moura',
@@ -307,7 +306,6 @@ const INSTRUTOR_OPTIONS = [
 ];
 
 const TREINAMENTO_OPTIONS = [
-  'Treinamento Geral',
   'Acolhimento e Classificação',
   'Atendimento Humanizado',
   'Biossegurança',
@@ -330,7 +328,6 @@ const TREINAMENTO_OPTIONS = [
 ];
 
 const CARGO_OPTIONS = [
-  'Cargo Geral',
   'Atendente',
   'Auxiliar Técnico',
   'Auxiliar de Farmácia',
@@ -414,10 +411,10 @@ const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(INITIAL_PERIOD);
-  const [selectedSetor, setSelectedSetor] = useState('Setor Geral');
-  const [selectedInstrutor, setSelectedInstrutor] = useState('Instrutor Geral');
-  const [selectedTreinamento, setSelectedTreinamento] = useState('Treinamento Geral');
-  const [selectedCargo, setSelectedCargo] = useState('Cargo Geral');
+  const [selectedSetores, setSelectedSetores] = useState<string[]>([]);
+  const [selectedInstrutores, setSelectedInstrutores] = useState<string[]>([]);
+  const [selectedTreinamentos, setSelectedTreinamentos] = useState<string[]>([]);
+  const [selectedCargos, setSelectedCargos] = useState<string[]>([]);
   const [openFilterDropdown, setOpenFilterDropdown] = useState<string | null>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
 
@@ -516,16 +513,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   }, [selectedPeriod]);
 
   const activeFiltersMap = useMemo(() => {
-    const map: Record<string, string> = {
+    const map: Record<string, string | string[]> = {
       'Unidades': 'Todas as unidades',
       'Tipo de Treinamento': 'Todos os tipos'
     };
-    if (selectedSetor !== 'Setor Geral') map['Setor'] = selectedSetor;
-    if (selectedInstrutor !== 'Instrutor Geral') map['Instrutor'] = selectedInstrutor;
-    if (selectedTreinamento !== 'Treinamento Geral') map['Treinamento'] = selectedTreinamento;
-    if (selectedCargo !== 'Cargo Geral') map['Cargo'] = selectedCargo;
+    if (selectedSetores.length > 0) map['Setor'] = selectedSetores;
+    if (selectedInstrutores.length > 0) map['Instrutor'] = selectedInstrutores;
+    if (selectedTreinamentos.length > 0) map['Treinamento'] = selectedTreinamentos;
+    if (selectedCargos.length > 0) map['Cargo'] = selectedCargos;
     return map;
-  }, [selectedSetor, selectedInstrutor, selectedTreinamento, selectedCargo]);
+  }, [selectedSetores, selectedInstrutores, selectedTreinamentos, selectedCargos]);
 
   const simulatedData = useMemo(() => {
     const view: ViewType = (activePanel?.templateId as ViewType) || 'Treinamentos Institucionais';
@@ -564,7 +561,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           category: card.selectedCategory
         });
 
-        const filterStr = `${selectedPeriod}-${selectedSetor}-${selectedInstrutor}-${selectedTreinamento}-${selectedCargo}`;
+        const filterStr = `${selectedPeriod}-${selectedSetores.slice().sort().join(',')}-${selectedInstrutores.slice().sort().join(',')}-${selectedTreinamentos.slice().sort().join(',')}-${selectedCargos.slice().sort().join(',')}`;
         const filterHash = stringHash(filterStr);
         const factor = 0.8 + ((filterHash % 40) / 100);
 
@@ -591,7 +588,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPeriod, selectedSetor, selectedInstrutor, selectedTreinamento, selectedCargo]);
+  }, [selectedPeriod, selectedSetores, selectedInstrutores, selectedTreinamentos, selectedCargos]);
 
   // Automatically separate any overlapping cards from previous sessions
   useEffect(() => {
@@ -829,10 +826,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   // included) starts blank, so this clears it back to blank.
   const handleResetDefaultCards = () => {
     setSelectedPeriod(INITIAL_PERIOD);
-    setSelectedSetor('Setor Geral');
-    setSelectedInstrutor('Instrutor Geral');
-    setSelectedTreinamento('Treinamento Geral');
-    setSelectedCargo('Cargo Geral');
+    setSelectedSetores([]);
+    setSelectedInstrutores([]);
+    setSelectedTreinamentos([]);
+    setSelectedCargos([]);
     setOpenFilterDropdown(null);
     if (activePanel.templateId && TEMPLATE_LAYOUT_SPECS[activePanel.templateId]) {
       const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(activePanel.templateId, INITIAL_PERIOD);
@@ -887,7 +884,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
               treinamentosData={simulatedData.internalTrainingsData}
               cargosData={simulatedData.jobPositionsData}
               rowsData={simulatedData.costCenterRowsData}
-              selectedSetor={selectedSetor}
+              selectedSetor={selectedSetores}
               onVerDetalhes={hasReport ? () => setDetailsReportCatalogId(card.catalogId) : undefined}
             />
           </div>
@@ -1064,108 +1061,60 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           </div>
 
           {/* 2. Filtro Setor Geral */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'setor' ? null : 'setor')}
-              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
-                openFilterDropdown === 'setor' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
-              }`}
-              title="Filtrar por Setor Geral"
-            >
-              <span>{selectedSetor}</span>
-              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'setor' ? 'rotate-180 text-[#004e4c]' : ''}`} />
-            </button>
-            {openFilterDropdown === 'setor' && (
-              <FilterDropdownMenu
-                options={SETOR_OPTIONS}
-                selected={selectedSetor}
-                onSelect={(val) => {
-                  setSelectedSetor(val);
-                  setOpenFilterDropdown(null);
-                }}
-                hasSearch
-              />
-            )}
-          </div>
+          <MultiSelectFilterDropdown
+            label="Setor Geral"
+            singularName="Setor"
+            pluralName="Setores"
+            options={SETOR_OPTIONS}
+            selected={selectedSetores}
+            onChange={setSelectedSetores}
+            isOpen={openFilterDropdown === 'setor'}
+            onToggle={() => setOpenFilterDropdown(openFilterDropdown === 'setor' ? null : 'setor')}
+            onClose={() => setOpenFilterDropdown(null)}
+            placeholder="Buscar setor..."
+          />
 
           {/* 3. Filtro Instrutor Geral */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'instrutor' ? null : 'instrutor')}
-              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
-                openFilterDropdown === 'instrutor' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
-              }`}
-              title="Filtrar por Instrutor Geral"
-            >
-              <span>{selectedInstrutor}</span>
-              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'instrutor' ? 'rotate-180 text-[#004e4c]' : ''}`} />
-            </button>
-            {openFilterDropdown === 'instrutor' && (
-              <FilterDropdownMenu
-                options={INSTRUTOR_OPTIONS}
-                selected={selectedInstrutor}
-                onSelect={(val) => {
-                  setSelectedInstrutor(val);
-                  setOpenFilterDropdown(null);
-                }}
-                hasSearch
-              />
-            )}
-          </div>
+          <MultiSelectFilterDropdown
+            label="Instrutor Geral"
+            singularName="Instrutor"
+            pluralName="Instrutores"
+            options={INSTRUTOR_OPTIONS}
+            selected={selectedInstrutores}
+            onChange={setSelectedInstrutores}
+            isOpen={openFilterDropdown === 'instrutor'}
+            onToggle={() => setOpenFilterDropdown(openFilterDropdown === 'instrutor' ? null : 'instrutor')}
+            onClose={() => setOpenFilterDropdown(null)}
+            placeholder="Buscar instrutor..."
+          />
 
           {/* 4. Filtro Treinamento Geral */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'treinamento' ? null : 'treinamento')}
-              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
-                openFilterDropdown === 'treinamento' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
-              }`}
-              title="Filtrar por Treinamento Geral"
-            >
-              <span>{selectedTreinamento}</span>
-              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'treinamento' ? 'rotate-180 text-[#004e4c]' : ''}`} />
-            </button>
-            {openFilterDropdown === 'treinamento' && (
-              <FilterDropdownMenu
-                options={TREINAMENTO_OPTIONS}
-                selected={selectedTreinamento}
-                onSelect={(val) => {
-                  setSelectedTreinamento(val);
-                  setOpenFilterDropdown(null);
-                }}
-                hasSearch
-              />
-            )}
-          </div>
+          <MultiSelectFilterDropdown
+            label="Treinamento Geral"
+            singularName="Treinamento"
+            pluralName="Treinamentos"
+            options={TREINAMENTO_OPTIONS}
+            selected={selectedTreinamentos}
+            onChange={setSelectedTreinamentos}
+            isOpen={openFilterDropdown === 'treinamento'}
+            onToggle={() => setOpenFilterDropdown(openFilterDropdown === 'treinamento' ? null : 'treinamento')}
+            onClose={() => setOpenFilterDropdown(null)}
+            placeholder="Buscar treinamento..."
+          />
 
           {/* 5. Filtro Cargo Geral */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'cargo' ? null : 'cargo')}
-              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
-                openFilterDropdown === 'cargo' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
-              }`}
-              title="Filtrar por Cargo Geral"
-            >
-              <span>{selectedCargo}</span>
-              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'cargo' ? 'rotate-180 text-[#004e4c]' : ''}`} />
-            </button>
-            {openFilterDropdown === 'cargo' && (
-              <FilterDropdownMenu
-                options={CARGO_OPTIONS}
-                selected={selectedCargo}
-                onSelect={(val) => {
-                  setSelectedCargo(val);
-                  setOpenFilterDropdown(null);
-                }}
-                hasSearch
-              />
-            )}
-          </div>
+          <MultiSelectFilterDropdown
+            label="Cargo Geral"
+            singularName="Cargo"
+            pluralName="Cargos"
+            options={CARGO_OPTIONS}
+            selected={selectedCargos}
+            onChange={setSelectedCargos}
+            isOpen={openFilterDropdown === 'cargo'}
+            onToggle={() => setOpenFilterDropdown(openFilterDropdown === 'cargo' ? null : 'cargo')}
+            onClose={() => setOpenFilterDropdown(null)}
+            placeholder="Buscar cargo..."
+          />
 
           {/* Add Chart Button (+) */}
           <button

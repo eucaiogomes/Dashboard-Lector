@@ -3,7 +3,7 @@ import { educacaoPermanenteData } from '../data/educacaoPermanenteData';
 import { VerDetalhesButton } from './VerDetalhesButton';
 
 interface EducacaoPermanenteBlockProps {
-  selectedSetor?: string;
+  selectedSetor?: string | string[];
   onVerDetalhes?: () => void;
 }
 
@@ -18,9 +18,15 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
 }) => {
   const [internalSetor, setInternalSetor] = useState(educacaoPermanenteData[0].setor);
 
-  const matchedExternal = externalSetor && externalSetor !== 'Setor Geral' && educacaoPermanenteData.some(d => d.setor === externalSetor)
-    ? externalSetor
-    : null;
+  const matchedExternal = React.useMemo(() => {
+    if (!externalSetor) return null;
+    if (Array.isArray(externalSetor)) {
+      return externalSetor.find(s => s !== 'Setor Geral' && educacaoPermanenteData.some(d => d.setor === s)) || null;
+    }
+    return externalSetor !== 'Setor Geral' && educacaoPermanenteData.some(d => d.setor === externalSetor)
+      ? externalSetor
+      : null;
+  }, [externalSetor]);
 
   const selectedSetor = matchedExternal || internalSetor;
 
