@@ -4,6 +4,10 @@ import { VerDetalhesButton } from './VerDetalhesButton';
 
 interface EducacaoPermanenteBlockProps {
   selectedSetor?: string | string[];
+  simulatedData?: {
+    growthMultiplier?: number;
+    [key: string]: any;
+  };
   onVerDetalhes?: () => void;
 }
 
@@ -14,6 +18,7 @@ interface EducacaoPermanenteBlockProps {
  */
 export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = ({
   selectedSetor: externalSetor,
+  simulatedData,
   onVerDetalhes
 }) => {
   const [internalSetor, setInternalSetor] = useState(educacaoPermanenteData[0].setor);
@@ -32,6 +37,12 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
 
   const r =
     educacaoPermanenteData.find(d => d.setor === selectedSetor) ?? educacaoPermanenteData[0];
+
+  const growth = simulatedData?.growthMultiplier || (Array.isArray(externalSetor) && externalSetor.length > 0 ? 1 + externalSetor.length * 0.25 : 1);
+  const colabTreinados = Math.round(r.colaboradoresTreinados * growth);
+  const colabElegiveis = Math.round(r.colaboradoresElegiveis * growth);
+  const turmasExec = Math.round(r.turmasExecutadas * growth);
+  const turmasPlan = Math.round(r.turmasPlanejadas * growth);
 
   return (
     <div className="bg-white border border-[#e4e8ee] rounded-2xl shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] overflow-hidden h-full flex flex-col justify-between">
@@ -105,10 +116,10 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
               </div>
             </div>
             <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
-              {r.colaboradoresTreinados}
+              {colabTreinados}
             </div>
             <div className="text-[11px] text-[#6b7684]">
-              de {r.colaboradoresElegiveis} elegíveis
+              de {colabElegiveis} elegíveis
             </div>
           </div>
 
@@ -161,10 +172,10 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
               </div>
             </div>
             <div className="text-[28px] font-bold text-[#004e4c] tracking-tight leading-none">
-              {String(r.turmasExecutadas).padStart(2, '0')}
+              {String(turmasExec).padStart(2, '0')}
             </div>
             <div className="text-[11px] text-[#6b7684]">
-              de {String(r.turmasPlanejadas).padStart(2, '0')} planejadas
+              de {String(turmasPlan).padStart(2, '0')} planejadas
             </div>
           </div>
         </div>

@@ -561,19 +561,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           category: card.selectedCategory
         });
 
+        const totalSelectedFilters = selectedSetores.length + selectedInstrutores.length + selectedTreinamentos.length + selectedCargos.length;
+        // Base growth: each selected filter item adds +25% to chart values
+        const filterGrowthMultiplier = 1.0 + (totalSelectedFilters * 0.25);
+
         const filterStr = `${selectedPeriod}-${selectedSetores.slice().sort().join(',')}-${selectedInstrutores.slice().sort().join(',')}-${selectedTreinamentos.slice().sort().join(',')}-${selectedCargos.slice().sort().join(',')}`;
         const filterHash = stringHash(filterStr);
-        const factor = 0.8 + ((filterHash % 40) / 100);
 
         const variedData = regenerated.data.map((dp, i) => {
-          const itemHash = (filterHash + i * 19) % 35;
-          const itemFactor = 0.82 + (itemHash / 100);
+          const itemVariation = 1.0 + (((filterHash + i * 13) % 10) / 100);
+          const combinedFactor = filterGrowthMultiplier * itemVariation;
           return {
             ...dp,
-            value: Math.max(1, Math.round(dp.value * itemFactor)),
+            value: Math.max(1, Math.round(dp.value * combinedFactor)),
             valueSecondary:
               dp.valueSecondary !== undefined
-                ? Math.max(0, Math.round(dp.valueSecondary * itemFactor))
+                ? Math.max(0, Math.round(dp.valueSecondary * combinedFactor))
                 : undefined
           };
         });
@@ -581,8 +584,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
         return {
           ...card,
           data: variedData,
-          maxScale: Math.round(regenerated.maxScale * factor),
-          ticks: regenerated.ticks.map(t => Math.round(t * factor)),
+          maxScale: Math.round(regenerated.maxScale * filterGrowthMultiplier),
+          ticks: regenerated.ticks.map(t => Math.round(t * filterGrowthMultiplier)),
           meta: regenerated.meta
         };
       })
@@ -1060,9 +1063,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             )}
           </div>
 
-          {/* 2. Filtro Setor Geral */}
+          {/* 2. Filtro Setor */}
           <MultiSelectFilterDropdown
-            label="Setor Geral"
+            label="Setor"
             singularName="Setor"
             pluralName="Setores"
             options={SETOR_OPTIONS}
@@ -1074,9 +1077,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             placeholder="Buscar setor..."
           />
 
-          {/* 3. Filtro Instrutor Geral */}
+          {/* 3. Filtro Instrutor */}
           <MultiSelectFilterDropdown
-            label="Instrutor Geral"
+            label="Instrutor"
             singularName="Instrutor"
             pluralName="Instrutores"
             options={INSTRUTOR_OPTIONS}
@@ -1088,9 +1091,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             placeholder="Buscar instrutor..."
           />
 
-          {/* 4. Filtro Treinamento Geral */}
+          {/* 4. Filtro Treinamento */}
           <MultiSelectFilterDropdown
-            label="Treinamento Geral"
+            label="Treinamento"
             singularName="Treinamento"
             pluralName="Treinamentos"
             options={TREINAMENTO_OPTIONS}
@@ -1102,9 +1105,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
             placeholder="Buscar treinamento..."
           />
 
-          {/* 5. Filtro Cargo Geral */}
+          {/* 5. Filtro Cargo */}
           <MultiSelectFilterDropdown
-            label="Cargo Geral"
+            label="Cargo"
             singularName="Cargo"
             pluralName="Cargos"
             options={CARGO_OPTIONS}

@@ -66,18 +66,20 @@ export function getSimulatedData(
     tipoMultiplier = 0.45;
   }
 
-  // Manager / Cost Center / Cargo filter impact
-  let specificFilterMultiplier = 1.0;
-  if (gerente !== 'Todos') specificFilterMultiplier *= 0.35;
-  if (supervisor !== 'Todos') specificFilterMultiplier *= 0.25;
-  if (centroCusto !== 'Todos') specificFilterMultiplier *= 0.15;
-  if (gestor !== 'Todos') specificFilterMultiplier *= 0.2;
-  if (cargos.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.9 - (cargos.length * 0.07));
-  if (setores.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.85 - (setores.length * 0.06));
-  if (instrutores.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.8 - (instrutores.length * 0.05));
-  if (treinamentos.length > 0) specificFilterMultiplier *= Math.max(0.2, 0.75 - (treinamentos.length * 0.05));
+  // Selected filter counts
+  const totalSelectedFilters = cargos.length + setores.length + instrutores.length + treinamentos.length;
 
-  const totalMultiplier = Math.max(0.05, unitMultiplier * tipoMultiplier * specificFilterMultiplier);
+  // Base growth: each selected item adds +25% cumulatively to chart values
+  // 0 items: 1.0x, 1 item: 1.25x, 2 items: 1.50x, 3 items: 1.75x, 4 items: 2.0x, etc.
+  const filterGrowthMultiplier = 1.0 + (totalSelectedFilters * 0.25);
+
+  let specificFilterMultiplier = filterGrowthMultiplier;
+  if (gerente !== 'Todos') specificFilterMultiplier *= 1.15;
+  if (supervisor !== 'Todos') specificFilterMultiplier *= 1.12;
+  if (centroCusto !== 'Todos') specificFilterMultiplier *= 1.15;
+  if (gestor !== 'Todos') specificFilterMultiplier *= 1.12;
+
+  const totalMultiplier = unitMultiplier * tipoMultiplier * specificFilterMultiplier;
 
   // Month names abbreviation
   const monthAbbrs = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -96,10 +98,10 @@ export function getSimulatedData(
 
     // Pseudo-random monthly variation based on seed and month index
     const mSeed = (seed + i * 37 + curMIndex * 13) % 100;
-    const prevCount = Math.max(1, Math.round((3 + (mSeed % 4)) * (totalMultiplier > 0.5 ? 1 : 0.7)));
-    const realCount = Math.max(0, Math.min(prevCount, Math.round(prevCount * (0.4 + (mSeed % 55) / 100))));
+    const prevCount = Math.max(1, Math.round((3 + (mSeed % 4)) * totalMultiplier));
+    const realCount = Math.max(0, Math.min(prevCount, Math.round(prevCount * (0.65 + (mSeed % 30) / 100))));
 
-    const baseAtivos = Math.round((1200 + (curMIndex * 4) + (mSeed % 15)) * unitMultiplier);
+    const baseAtivos = Math.round((1200 + (curMIndex * 4) + (mSeed % 15)) * unitMultiplier * totalMultiplier);
     const ativosCount = afastados ? baseAtivos : Math.round(baseAtivos * 0.95);
     
     const colabTreinados = Math.round(ativosCount * (0.45 + (mSeed % 35) / 100) * (tipoMultiplier < 1 ? 0.6 : 1));
@@ -334,6 +336,7 @@ export function getSimulatedData(
     internalTrainingsData: internalTrainings,
     jobPositionsData: jobPositions,
     costCenterRowsData: costCenterRows,
-    kpis
+    kpis,
+    growthMultiplier: filterGrowthMultiplier
   };
 }
