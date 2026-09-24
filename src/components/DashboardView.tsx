@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GridLayout, { LayoutItem, verticalCompactor, useContainerWidth } from 'react-grid-layout';
 import {
   CHART_CATALOG,
@@ -29,7 +29,7 @@ import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ReportDetailOverlay } from './ReportDetailOverlay';
 import { REPORT_DEFINITIONS } from '../data/reportDefinitions';
 import { ViewType } from '../types';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import {
   GRID_COLS,
   GRID_MARGIN,
@@ -248,8 +248,178 @@ const useIsDesktop = (breakpointPx = 1024): boolean => {
   return isDesktop;
 };
 
+const PERIOD_OPTIONS = [
+  'Agosto - 2026',
+  'Julho - 2026',
+  'Junho - 2026',
+  'Maio - 2026',
+  'Abril - 2026',
+  'Março - 2026',
+  'Fevereiro - 2026',
+  'Janeiro - 2026',
+  'Dezembro - 2025',
+  'Novembro - 2025',
+  'Outubro - 2025',
+  'Setembro - 2025'
+];
+
+const SETOR_OPTIONS = [
+  'Setor Geral',
+  'Centro Cirúrgico',
+  'Centro Médico',
+  'Faturamento',
+  'Hemodiálise',
+  'Internação Clínica',
+  'Pronto Atendimento',
+  'Recepção / SAC',
+  'Sede Administrativa',
+  'UTI Adulto'
+];
+
+const INSTRUTOR_OPTIONS = [
+  'Instrutor Geral',
+  'Ana Paula Ribeiro',
+  'C. Duarte',
+  'Carlos E. Moura',
+  'Fernanda Lima',
+  'Juliana Costa',
+  'L. Andrade',
+  'M. Souza',
+  'M. Tavares',
+  'Marcos Antunes',
+  'P. Vieira',
+  'Patrícia Nunes',
+  'R. Menezes',
+  'Rafaela',
+  'Rodrigo Salles',
+  'S. Barreto'
+];
+
+const TREINAMENTO_OPTIONS = [
+  'Treinamento Geral',
+  'Acolhimento e Classificação',
+  'Atendimento Humanizado',
+  'Biossegurança',
+  'Brigada de Incêndio',
+  'Cirurgia Segura',
+  'Código de Conduta e Compliance',
+  'Comunicação Não Violenta no Atendimento',
+  'Glosas e Auditoria',
+  'Higienização das Mãos',
+  'Integração — Visita Técnica',
+  'Manejo de Feridas e Curativos',
+  'NR32 e Biossegurança',
+  'Política Institucional — Qualidade',
+  'Política Institucional — Segurança',
+  'Precauções e Isolamento',
+  'Prevenção de Quedas',
+  'Protocolo Institucional de Prevenção de Aspiração',
+  'Segurança do Paciente',
+  'Ventilação Mecânica'
+];
+
+const CARGO_OPTIONS = [
+  'Cargo Geral',
+  'Atendente',
+  'Auxiliar Técnico',
+  'Auxiliar de Farmácia',
+  'Enfermeiro',
+  'Fisioterapeuta',
+  'Recepcionista',
+  'Técnico de Enfermagem',
+  'Técnico de Patologia',
+  'Técnico de Radiologia',
+  'Terceiro'
+];
+
+interface FilterDropdownMenuProps {
+  options: string[];
+  selected: string;
+  onSelect: (value: string) => void;
+  hasSearch?: boolean;
+}
+
+const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
+  options,
+  selected,
+  onSelect,
+  hasSearch = false
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const filtered = useMemo(() => {
+    if (!searchTerm.trim()) return options;
+    const lower = searchTerm.toLowerCase();
+    return options.filter(opt => opt.toLowerCase().includes(lower));
+  }, [options, searchTerm]);
+
+  return (
+    <div className="absolute top-full left-0 mt-1 min-w-[210px] w-max max-w-[280px] bg-white border border-[#cfd6e0] rounded-[6px] shadow-lg py-1.5 z-50 animate-in fade-in duration-100">
+      {hasSearch && options.length > 5 && (
+        <div className="px-2 pb-1.5 mb-1 border-b border-[#f0f3f7]">
+          <div className="relative flex items-center">
+            <i className="icon-spyglass text-[11px] text-[#8a93a0] absolute left-2 pointer-events-none"></i>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar..."
+              className="w-full h-[26px] pl-6 pr-2 bg-[#f8fafc] border border-[#cfd6e0] rounded text-[11.5px] text-[#334155] placeholder-[#8a93a0] outline-none focus:border-[#004e4c]"
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
+      <div className="max-h-56 overflow-y-auto">
+        {filtered.length === 0 ? (
+          <div className="px-3 py-2 text-[11.5px] text-[#8a93a0] italic text-center">
+            Nenhum resultado
+          </div>
+        ) : (
+          filtered.map(opt => {
+            const isSelected = opt === selected;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onSelect(opt)}
+                className={`w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors cursor-pointer ${
+                  isSelected
+                    ? 'text-[#004e4c] font-bold bg-[#eef7f4]'
+                    : 'text-[#4a5462] hover:bg-[#f0f4f8] hover:text-[#004e4c]'
+                }`}
+              >
+                <span className="truncate">{opt}</span>
+                {isSelected && (
+                  <i className="icon-checked text-[#00995d] text-[11px] shrink-0 ml-2"></i>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(INITIAL_PERIOD);
+  const [selectedSetor, setSelectedSetor] = useState('Setor Geral');
+  const [selectedInstrutor, setSelectedInstrutor] = useState('Instrutor Geral');
+  const [selectedTreinamento, setSelectedTreinamento] = useState('Treinamento Geral');
+  const [selectedCargo, setSelectedCargo] = useState('Cargo Geral');
+  const [openFilterDropdown, setOpenFilterDropdown] = useState<string | null>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target as Node)) {
+        setOpenFilterDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCardForModal, setSelectedCardForModal] = useState<DashboardCardItem | null>(null);
@@ -568,8 +738,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   // On a template panel this restores its widget set; every other panel (the default one
   // included) starts blank, so this clears it back to blank.
   const handleResetDefaultCards = () => {
+    setSelectedPeriod(INITIAL_PERIOD);
+    setSelectedSetor('Setor Geral');
+    setSelectedInstrutor('Instrutor Geral');
+    setSelectedTreinamento('Treinamento Geral');
+    setSelectedCargo('Cargo Geral');
+    setOpenFilterDropdown(null);
     if (activePanel.templateId && TEMPLATE_LAYOUT_SPECS[activePanel.templateId]) {
-      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(activePanel.templateId, selectedPeriod);
+      const { cards: templateCards, layout: templateLayout } = createPanelFromTemplate(activePanel.templateId, INITIAL_PERIOD);
       setCards(templateCards);
       setLayout(templateLayout);
     } else {
@@ -762,11 +938,134 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       {/* Filter Row & Add Chart Action — stays in this same top position on every panel
           (including template ones). */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 bg-white p-2.5 px-3.5 rounded-[6px] border border-[#e0e5eb] shadow-2xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Date Selector Pill */}
-          <div className="relative flex items-center h-[34px] px-3.5 bg-[#f8fafc] border border-[#cfd6e0] rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors">
-            <span>{selectedPeriod}</span>
-            <i className="icon-calendar text-[#8a93a0] ml-3 text-[14px]"></i>
+        <div ref={filterBarRef} className="flex flex-wrap items-center gap-3">
+          {/* 1. Date Selector Pill */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'period' ? null : 'period')}
+              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
+                openFilterDropdown === 'period' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
+              }`}
+              title="Selecionar período"
+            >
+              <span>{selectedPeriod}</span>
+              <i className="icon-calendar text-[#8a93a0] ml-3 text-[14px]"></i>
+            </button>
+            {openFilterDropdown === 'period' && (
+              <FilterDropdownMenu
+                options={PERIOD_OPTIONS}
+                selected={selectedPeriod}
+                onSelect={(val) => {
+                  setSelectedPeriod(val);
+                  setOpenFilterDropdown(null);
+                }}
+              />
+            )}
+          </div>
+
+          {/* 2. Filtro Setor Geral */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'setor' ? null : 'setor')}
+              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
+                openFilterDropdown === 'setor' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
+              }`}
+              title="Filtrar por Setor Geral"
+            >
+              <span>{selectedSetor}</span>
+              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'setor' ? 'rotate-180 text-[#004e4c]' : ''}`} />
+            </button>
+            {openFilterDropdown === 'setor' && (
+              <FilterDropdownMenu
+                options={SETOR_OPTIONS}
+                selected={selectedSetor}
+                onSelect={(val) => {
+                  setSelectedSetor(val);
+                  setOpenFilterDropdown(null);
+                }}
+                hasSearch
+              />
+            )}
+          </div>
+
+          {/* 3. Filtro Instrutor Geral */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'instrutor' ? null : 'instrutor')}
+              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
+                openFilterDropdown === 'instrutor' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
+              }`}
+              title="Filtrar por Instrutor Geral"
+            >
+              <span>{selectedInstrutor}</span>
+              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'instrutor' ? 'rotate-180 text-[#004e4c]' : ''}`} />
+            </button>
+            {openFilterDropdown === 'instrutor' && (
+              <FilterDropdownMenu
+                options={INSTRUTOR_OPTIONS}
+                selected={selectedInstrutor}
+                onSelect={(val) => {
+                  setSelectedInstrutor(val);
+                  setOpenFilterDropdown(null);
+                }}
+                hasSearch
+              />
+            )}
+          </div>
+
+          {/* 4. Filtro Treinamento Geral */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'treinamento' ? null : 'treinamento')}
+              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
+                openFilterDropdown === 'treinamento' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
+              }`}
+              title="Filtrar por Treinamento Geral"
+            >
+              <span>{selectedTreinamento}</span>
+              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'treinamento' ? 'rotate-180 text-[#004e4c]' : ''}`} />
+            </button>
+            {openFilterDropdown === 'treinamento' && (
+              <FilterDropdownMenu
+                options={TREINAMENTO_OPTIONS}
+                selected={selectedTreinamento}
+                onSelect={(val) => {
+                  setSelectedTreinamento(val);
+                  setOpenFilterDropdown(null);
+                }}
+                hasSearch
+              />
+            )}
+          </div>
+
+          {/* 5. Filtro Cargo Geral */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFilterDropdown(openFilterDropdown === 'cargo' ? null : 'cargo')}
+              className={`flex items-center h-[34px] px-3.5 bg-[#f8fafc] border rounded-[6px] text-[13px] text-[#4a5462] font-medium cursor-pointer shadow-2xs hover:border-[#004e4c] transition-colors select-none ${
+                openFilterDropdown === 'cargo' ? 'border-[#004e4c] ring-1 ring-[#004e4c]' : 'border-[#cfd6e0]'
+              }`}
+              title="Filtrar por Cargo Geral"
+            >
+              <span>{selectedCargo}</span>
+              <ChevronDown className={`w-3.5 h-3.5 ml-2.5 text-[#8a93a0] transition-transform duration-150 shrink-0 ${openFilterDropdown === 'cargo' ? 'rotate-180 text-[#004e4c]' : ''}`} />
+            </button>
+            {openFilterDropdown === 'cargo' && (
+              <FilterDropdownMenu
+                options={CARGO_OPTIONS}
+                selected={selectedCargo}
+                onSelect={(val) => {
+                  setSelectedCargo(val);
+                  setOpenFilterDropdown(null);
+                }}
+                hasSearch
+              />
+            )}
           </div>
 
           {/* Add Chart Button (+) */}
