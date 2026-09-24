@@ -3,6 +3,7 @@ import { educacaoPermanenteData } from '../data/educacaoPermanenteData';
 import { VerDetalhesButton } from './VerDetalhesButton';
 
 interface EducacaoPermanenteBlockProps {
+  selectedSetor?: string;
   onVerDetalhes?: () => void;
 }
 
@@ -11,8 +12,17 @@ interface EducacaoPermanenteBlockProps {
  * elegíveis x treinados, adesão mensal x meta, turmas planejadas x executadas e esforço
  * extra. Um seletor de Setor troca todo o card para aquele relatório.
  */
-export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = ({ onVerDetalhes }) => {
-  const [selectedSetor, setSelectedSetor] = useState(educacaoPermanenteData[0].setor);
+export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = ({
+  selectedSetor: externalSetor,
+  onVerDetalhes
+}) => {
+  const [internalSetor, setInternalSetor] = useState(educacaoPermanenteData[0].setor);
+
+  const matchedExternal = externalSetor && externalSetor !== 'Setor Geral' && educacaoPermanenteData.some(d => d.setor === externalSetor)
+    ? externalSetor
+    : null;
+
+  const selectedSetor = matchedExternal || internalSetor;
 
   const r =
     educacaoPermanenteData.find(d => d.setor === selectedSetor) ?? educacaoPermanenteData[0];
@@ -28,7 +38,7 @@ export const EducacaoPermanenteBlock: React.FC<EducacaoPermanenteBlockProps> = (
         <div className="relative shrink-0">
           <select
             value={selectedSetor}
-            onChange={e => setSelectedSetor(e.target.value)}
+            onChange={e => setInternalSetor(e.target.value)}
             className="h-[26px] pl-2.5 pr-6 bg-white/10 hover:bg-white/15 border border-white/25 rounded text-[11px] text-[#eef7f4] font-semibold appearance-none cursor-pointer outline-none transition-colors"
             title="Selecionar setor"
           >

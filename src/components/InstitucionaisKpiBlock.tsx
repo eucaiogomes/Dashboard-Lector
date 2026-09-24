@@ -4,6 +4,7 @@ import { DateFilterValue } from './DateFilterPicker';
 
 interface InstitucionaisKpiBlockProps {
   period?: string;
+  simulatedData?: ReturnType<typeof getSimulatedData>;
   onVerDetalhes?: () => void;
 }
 
@@ -16,7 +17,11 @@ const KPI_ICONS: Record<string, string> = {
   'Percentual de Realização': 'icon-performance'
 };
 
-export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ period = 'Agosto - 2026' }) => {
+export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({
+  period = 'Agosto - 2026',
+  simulatedData: propSimulatedData,
+  onVerDetalhes
+}) => {
   const dateFilter: DateFilterValue = useMemo(
     () => ({
       mode: 'mensal',
@@ -30,7 +35,7 @@ export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ 
     [period]
   );
 
-  const simulatedData = useMemo(
+  const localSimulatedData = useMemo(
     () =>
       getSimulatedData(
         'Treinamentos Institucionais',
@@ -43,6 +48,8 @@ export const InstitucionaisKpiBlock: React.FC<InstitucionaisKpiBlockProps> = ({ 
       ),
     [dateFilter]
   );
+
+  const simulatedData = propSimulatedData || localSimulatedData;
 
   return (
     <div className="h-full w-full bg-white border border-[#e4e8ee] rounded-2xl shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] p-4 @[420px]:p-5 flex flex-col gap-4 select-none @container overflow-hidden">

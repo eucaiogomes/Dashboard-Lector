@@ -4,6 +4,7 @@ import { DateFilterValue } from './DateFilterPicker';
 
 interface TurmasPlanejadasExcedentesBlockProps {
   period?: string;
+  simulatedData?: ReturnType<typeof getSimulatedData>;
   onVerDetalhes?: () => void;
 }
 
@@ -13,7 +14,9 @@ interface TurmasPlanejadasExcedentesBlockProps {
  * card próprio para quem quiser esse indicador sozinho no Dashboard.
  */
 export const TurmasPlanejadasExcedentesBlock: React.FC<TurmasPlanejadasExcedentesBlockProps> = ({
-  period = 'Agosto - 2026'
+  period = 'Agosto - 2026',
+  simulatedData: propSimulatedData,
+  onVerDetalhes
 }) => {
   const dateFilter: DateFilterValue = useMemo(
     () => ({
@@ -28,7 +31,7 @@ export const TurmasPlanejadasExcedentesBlock: React.FC<TurmasPlanejadasExcedente
     [period]
   );
 
-  const simulatedData = useMemo(
+  const localSimulatedData = useMemo(
     () =>
       getSimulatedData(
         'Treinamentos Institucionais',
@@ -41,6 +44,8 @@ export const TurmasPlanejadasExcedentesBlock: React.FC<TurmasPlanejadasExcedente
       ),
     [dateFilter]
   );
+
+  const simulatedData = propSimulatedData || localSimulatedData;
 
   const turmasStats = useMemo(() => {
     const sumPlan = simulatedData.costCenterRowsData.reduce((acc, r) => acc + r.turmasPlanejadas, 0);

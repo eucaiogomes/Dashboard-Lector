@@ -4,6 +4,7 @@ import { DateFilterValue } from './DateFilterPicker';
 
 interface InternosKpiBlockProps {
   period?: string;
+  simulatedData?: ReturnType<typeof getSimulatedData>;
   onVerDetalhes?: () => void;
 }
 
@@ -15,7 +16,11 @@ const KPI_ICONS: Record<string, string> = {
   'Horas Treinadas': 'icon-clock'
 };
 
-export const InternosKpiBlock: React.FC<InternosKpiBlockProps> = ({ period = 'Agosto - 2026' }) => {
+export const InternosKpiBlock: React.FC<InternosKpiBlockProps> = ({
+  period = 'Agosto - 2026',
+  simulatedData: propSimulatedData,
+  onVerDetalhes
+}) => {
   const dateFilter: DateFilterValue = useMemo(() => ({
     mode: 'mensal',
     year: 2026,
@@ -26,13 +31,15 @@ export const InternosKpiBlock: React.FC<InternosKpiBlockProps> = ({ period = 'Ag
     displayText: period
   }), [period]);
 
-  const simulatedData = useMemo(
+  const localSimulatedData = useMemo(
     () => getSimulatedData('Treinamentos Internos', dateFilter, {
       Unidades: 'Todas as unidades',
       'Tipo de Treinamento': 'Todos os tipos'
     }, true),
     [dateFilter]
   );
+
+  const simulatedData = propSimulatedData || localSimulatedData;
 
   return (
     <div className="h-full w-full bg-white border border-[#e4e8ee] rounded-2xl shadow-[0_10px_25px_-14px_rgba(0,78,76,0.45)] p-4 @[420px]:p-5 flex flex-col gap-4 select-none @container overflow-hidden">

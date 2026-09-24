@@ -4,6 +4,7 @@ import { costCenterRowsData } from '../data/mockData';
 import { VerDetalhesButton } from './VerDetalhesButton';
 
 interface CentroCustoTableBlockProps {
+  rowsData?: typeof costCenterRowsData;
   onVerDetalhes?: () => void;
 }
 
@@ -12,8 +13,10 @@ interface CentroCustoTableBlockProps {
  * (Indicadores T&D → Por Centro de Custo) — same markup and logic, unchanged, just
  * relocated so it can be added as a single widget on the Dashboard.
  */
-export const CentroCustoTableBlock: React.FC<CentroCustoTableBlockProps> = ({ onVerDetalhes }) => {
-  const rowsData = costCenterRowsData;
+export const CentroCustoTableBlock: React.FC<CentroCustoTableBlockProps> = ({
+  rowsData = costCenterRowsData,
+  onVerDetalhes
+}) => {
 
   const [ccTab, setCcTab] = useState<CCTab>('Adesão');
   const [currentPage, setCurrentPage] = useState(1);

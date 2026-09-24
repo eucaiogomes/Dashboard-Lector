@@ -11,7 +11,7 @@ import {
 import { DateFilterValue } from '../components/DateFilterPicker';
 
 // Hash helper for deterministic variations based on filter strings
-function stringHash(str: string): number {
+export function stringHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
@@ -36,9 +36,12 @@ export function getSimulatedData(
   const cargo = activeFilters['Cargo'] || 'Todos';
   const centroCusto = activeFilters['Centro de custo'] || 'Todos';
   const gestor = activeFilters['Gestor'] || 'Todos';
+  const setor = activeFilters['Setor'] || activeFilters['setor'] || 'Todos';
+  const instrutor = activeFilters['Instrutor'] || activeFilters['instrutor'] || 'Todos';
+  const treinamento = activeFilters['Treinamento'] || activeFilters['treinamento'] || 'Todos';
 
   // Seed composite
-  const seedString = `${year}-${month}-${mode}-${unidade}-${tipoTreinamento}-${gerente}-${supervisor}-${cargo}-${centroCusto}-${gestor}-${afastados}`;
+  const seedString = `${year}-${month}-${mode}-${unidade}-${tipoTreinamento}-${gerente}-${supervisor}-${cargo}-${centroCusto}-${gestor}-${afastados}-${setor}-${instrutor}-${treinamento}`;
   const seed = stringHash(seedString);
 
   // Multipliers based on Unidade
@@ -58,9 +61,12 @@ export function getSimulatedData(
   let specificFilterMultiplier = 1.0;
   if (gerente !== 'Todos') specificFilterMultiplier *= 0.35;
   if (supervisor !== 'Todos') specificFilterMultiplier *= 0.25;
-  if (cargo !== 'Todos') specificFilterMultiplier *= 0.18;
+  if (cargo !== 'Todos' && cargo !== 'Cargo Geral') specificFilterMultiplier *= 0.85;
   if (centroCusto !== 'Todos') specificFilterMultiplier *= 0.15;
   if (gestor !== 'Todos') specificFilterMultiplier *= 0.2;
+  if (setor !== 'Todos' && setor !== 'Setor Geral') specificFilterMultiplier *= 0.78;
+  if (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral') specificFilterMultiplier *= 0.72;
+  if (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral') specificFilterMultiplier *= 0.65;
 
   const totalMultiplier = Math.max(0.05, unitMultiplier * tipoMultiplier * specificFilterMultiplier);
 
@@ -224,17 +230,20 @@ export function getSimulatedData(
     if (centroCusto !== 'Todos' && row.area !== centroCusto) return false;
     if (gestor !== 'Todos' && row.gestor !== gestor) return false;
     if (supervisor !== 'Todos' && row.supervisor !== supervisor) return false;
+    if (setor !== 'Todos' && setor !== 'Setor Geral' && row.area !== setor) return false;
+    if (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral' && row.instrutor !== instrutor) return false;
+    if (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral' && row.treinamento !== treinamento) return false;
     return true;
   });
 
   if (costCenterRows.length === 0) {
     costCenterRows = [{
-      area: centroCusto !== 'Todos' ? centroCusto : 'Centro Cirúrgico',
+      area: (setor !== 'Todos' && setor !== 'Setor Geral') ? setor : (centroCusto !== 'Todos' ? centroCusto : 'Centro Cirúrgico'),
       gestor: gestor !== 'Todos' ? gestor : 'Ana Paula Ribeiro',
       supervisor: supervisor !== 'Todos' ? supervisor : 'M. Tavares',
-      treinamento: tipoTreinamento !== 'Todos os tipos' ? tipoTreinamento : 'Segurança do Paciente',
+      treinamento: (treinamento !== 'Todos' && treinamento !== 'Treinamento Geral') ? treinamento : (tipoTreinamento !== 'Todos os tipos' ? tipoTreinamento : 'Segurança do Paciente'),
       aula: `Turma 01 · 15/${String(month + 1).padStart(2, '0')}`,
-      instrutor: 'R. Menezes',
+      instrutor: (instrutor !== 'Todos' && instrutor !== 'Instrutor Geral') ? instrutor : 'R. Menezes',
       inscritos: Math.round(30 * totalMultiplier),
       realizaram: Math.round(25 * totalMultiplier),
       turmasPlanejadas: 3,

@@ -28,8 +28,10 @@ import { ChartTypeSelector, ChartTypeOption } from './ChartTypeSelector';
 import { DetailedIndicadoresModal } from './DetailedIndicadoresModal';
 import { ReportDetailOverlay } from './ReportDetailOverlay';
 import { REPORT_DEFINITIONS } from '../data/reportDefinitions';
-import { ViewType } from '../types';
+import { ViewType, MonthData, TrainingTypeData, AgendaItem, InternalTraining, JobPositionData, CostCenterRow } from '../types';
 import { X, ChevronDown } from 'lucide-react';
+import { getSimulatedData, stringHash } from '../utils/filterSimulator';
+import { DateFilterValue } from './DateFilterPicker';
 import {
   GRID_COLS,
   GRID_MARGIN,
@@ -57,24 +59,33 @@ import {
 
 interface SpecialWidgetProps {
   onVerDetalhes?: () => void;
+  period?: string;
+  simulatedData?: ReturnType<typeof getSimulatedData>;
+  baseData?: MonthData[];
+  tiposData?: TrainingTypeData[];
+  agendaData?: AgendaItem[];
+  treinamentosData?: InternalTraining[];
+  cargosData?: JobPositionData[];
+  rowsData?: CostCenterRow[];
+  selectedSetor?: string;
 }
 
 /** Maps each special-widget catalog id to the bespoke component that renders it, bypassing
  * the generic chart renderer / card chrome. See dashboardCatalog.ts SPECIAL_WIDGET_IDS. */
 const SPECIAL_WIDGETS: Record<string, React.FC<SpecialWidgetProps>> = {
-  [SPECIAL_WIDGET_IDS.institucionaisKpis]: InstitucionaisKpiBlock,
-  [SPECIAL_WIDGET_IDS.institucionaisTabs]: InstitucionaisTabsBlock,
-  [SPECIAL_WIDGET_IDS.institucionaisPercentual]: InstitucionaisPercentualBlock,
-  [SPECIAL_WIDGET_IDS.institucionaisAgenda]: AgendaBlock,
-  [SPECIAL_WIDGET_IDS.internosKpis]: InternosKpiBlock,
-  [SPECIAL_WIDGET_IDS.internosEvolucao]: InternosEvolucaoBlock,
-  [SPECIAL_WIDGET_IDS.internosAtivosTreinados]: AtivosTreinadosBlock,
-  [SPECIAL_WIDGET_IDS.internosTreinamentosHoras]: TreinamentosRankingBlock,
-  [SPECIAL_WIDGET_IDS.internosRankingCargo]: RankingCargoBlock,
-  [SPECIAL_WIDGET_IDS.centroCustoTabela]: CentroCustoTableBlock,
-  [SPECIAL_WIDGET_IDS.turmasExecucao]: TurmasExecucaoDonutBlock,
-  [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock,
-  [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: TurmasPlanejadasExcedentesBlock
+  [SPECIAL_WIDGET_IDS.institucionaisKpis]: InstitucionaisKpiBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.institucionaisTabs]: InstitucionaisTabsBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.institucionaisPercentual]: InstitucionaisPercentualBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.institucionaisAgenda]: AgendaBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.internosKpis]: InternosKpiBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.internosEvolucao]: InternosEvolucaoBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.internosAtivosTreinados]: AtivosTreinadosBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.internosTreinamentosHoras]: TreinamentosRankingBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.internosRankingCargo]: RankingCargoBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.centroCustoTabela]: CentroCustoTableBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.turmasExecucao]: TurmasExecucaoDonutBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.educacaoPermanente]: EducacaoPermanenteBlock as unknown as React.FC<SpecialWidgetProps>,
+  [SPECIAL_WIDGET_IDS.turmasPlanejadasExcedentes]: TurmasPlanejadasExcedentesBlock as unknown as React.FC<SpecialWidgetProps>
 };
 
 type LayoutSpec = { catalogId: string; x: number; y: number; w: number; h: number };
@@ -482,6 +493,45 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
   const cards = activePanel.cards;
   const layout = activePanel.layout;
 
+  const MONTH_NAMES = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const dateFilterValue: DateFilterValue = useMemo(() => {
+    const parts = selectedPeriod.split(' - ');
+    const monthName = parts[0]?.trim() || 'Agosto';
+    const year = parseInt(parts[1]?.trim(), 10) || 2026;
+    const monthIndex = MONTH_NAMES.indexOf(monthName);
+    const month = monthIndex >= 0 ? monthIndex : 7;
+    return {
+      mode: 'mensal',
+      year,
+      month,
+      monthName,
+      startDate: `${year}-${String(month + 1).padStart(2, '0')}-01`,
+      endDate: `${year}-${String(month + 1).padStart(2, '0')}-28`,
+      displayText: selectedPeriod
+    };
+  }, [selectedPeriod]);
+
+  const activeFiltersMap = useMemo(() => {
+    const map: Record<string, string> = {
+      'Unidades': 'Todas as unidades',
+      'Tipo de Treinamento': 'Todos os tipos'
+    };
+    if (selectedSetor !== 'Setor Geral') map['Setor'] = selectedSetor;
+    if (selectedInstrutor !== 'Instrutor Geral') map['Instrutor'] = selectedInstrutor;
+    if (selectedTreinamento !== 'Treinamento Geral') map['Treinamento'] = selectedTreinamento;
+    if (selectedCargo !== 'Cargo Geral') map['Cargo'] = selectedCargo;
+    return map;
+  }, [selectedSetor, selectedInstrutor, selectedTreinamento, selectedCargo]);
+
+  const simulatedData = useMemo(() => {
+    const view: ViewType = (activePanel?.templateId as ViewType) || 'Treinamentos Institucionais';
+    return getSimulatedData(view, dateFilterValue, activeFiltersMap, true);
+  }, [activePanel?.templateId, dateFilterValue, activeFiltersMap]);
+
   const updateActivePanel = (updater: (panel: DashboardPanel) => DashboardPanel) => {
     setPanels(prev => prev.map(p => (p.id === activePanelId ? updater(p) : p)));
   };
@@ -502,6 +552,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
       layout: typeof updater === 'function' ? (updater as (prev: LayoutItem[]) => LayoutItem[])(p.layout) : updater
     }));
   };
+
+  // Regenerate catalog cards data whenever any filter changes so the numbers simulate reactive updates
+  useEffect(() => {
+    setCards(prevCards =>
+      prevCards.map(card => {
+        const chartDef = CHART_CATALOG.find(c => c.id === card.catalogId);
+        if (!chartDef) return card;
+        const regenerated = chartDef.generateData({
+          period: selectedPeriod,
+          category: card.selectedCategory
+        });
+
+        const filterStr = `${selectedPeriod}-${selectedSetor}-${selectedInstrutor}-${selectedTreinamento}-${selectedCargo}`;
+        const filterHash = stringHash(filterStr);
+        const factor = 0.8 + ((filterHash % 40) / 100);
+
+        const variedData = regenerated.data.map((dp, i) => {
+          const itemHash = (filterHash + i * 19) % 35;
+          const itemFactor = 0.82 + (itemHash / 100);
+          return {
+            ...dp,
+            value: Math.max(1, Math.round(dp.value * itemFactor)),
+            valueSecondary:
+              dp.valueSecondary !== undefined
+                ? Math.max(0, Math.round(dp.valueSecondary * itemFactor))
+                : undefined
+          };
+        });
+
+        return {
+          ...card,
+          data: variedData,
+          maxScale: Math.round(regenerated.maxScale * factor),
+          ticks: regenerated.ticks.map(t => Math.round(t * factor)),
+          meta: regenerated.meta
+        };
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPeriod, selectedSetor, selectedInstrutor, selectedTreinamento, selectedCargo]);
 
   // Automatically separate any overlapping cards from previous sessions
   useEffect(() => {
@@ -789,6 +879,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ focusViewRequest }
           )}
           <div className="h-full w-full flex-1 min-h-0">
             <SpecialWidget
+              period={selectedPeriod}
+              simulatedData={simulatedData}
+              baseData={simulatedData.monthlyData}
+              tiposData={simulatedData.trainingTypesData}
+              agendaData={simulatedData.agendaData}
+              treinamentosData={simulatedData.internalTrainingsData}
+              cargosData={simulatedData.jobPositionsData}
+              rowsData={simulatedData.costCenterRowsData}
+              selectedSetor={selectedSetor}
               onVerDetalhes={hasReport ? () => setDetailsReportCatalogId(card.catalogId) : undefined}
             />
           </div>
